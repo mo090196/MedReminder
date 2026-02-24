@@ -1,8 +1,8 @@
 //
-//  Database.swift
+//  database.swift
 //  MedReminder
 //
-//  Created by uy on 19.02.26.
+//  Created by uy on 24.02.26.
 //
 
 import SwiftData
@@ -19,7 +19,7 @@ final class Medication {
     var isActive: Bool = true      // noch anzeigen?
 
     // 1 Medikament -> viele Pläne
-    @Relationship(deleteRule: .cascade) 
+    @Relationship(deleteRule: .cascade)
     var schedules: [MedicationSchedule] = []
 
     init(name: String,
@@ -93,5 +93,3 @@ final class MedicationDose {
         self.takenDate = takenDate
     }
 }
-
-

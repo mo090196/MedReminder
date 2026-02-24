@@ -10,8 +10,8 @@ struct HinzufügenView: View {
     @State private var note: String = ""
     @State private var startDate: Date = .now
     @State private var time: Date = .now
-    @State private var frequency: String = "daily"   // erstmal simpel
-
+    @State private var frequency: String = "daily"
+    
     var body: some View {
         NavigationStack {
             Form {
