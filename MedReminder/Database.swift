@@ -19,7 +19,7 @@ final class Medication {
     var isActive: Bool = true      // noch anzeigen?
 
     // 1 Medikament -> viele Pläne
-    @Relationship(deleteRule: .cascade)
+    @Relationship(deleteRule: .cascade) 
     var schedules: [MedicationSchedule] = []
 
     init(name: String,
@@ -93,4 +93,5 @@ final class MedicationDose {
         self.takenDate = takenDate
     }
 }
+
 
