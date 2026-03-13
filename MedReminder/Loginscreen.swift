@@ -34,7 +34,7 @@ struct LoginScreen: View {
                         .frame(width: 95, height: 80)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                         .padding(.top, 12)
-
+                    
                     Text("MedReminder")
                         .font(.system(size: 40, weight: .regular))
                         .foregroundStyle(Color(red: 33/255, green: 158/255, blue: 188/255))
@@ -92,6 +92,100 @@ struct LoginScreen: View {
                 SignInRoleSelectionView()
             }
         }
+    }
+}
+
+struct AccountRoleSelectionView: View {
+    @Environment(\.dismiss) private var dismiss
+    @State private var navigateToCreate: Bool = false
+    @State private var selectedRoleToCreate: CreateAccountView.RoleOption = .einnehmer
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            ZStack {
+                Color(red: 0xF6/255, green: 0xF8/255, blue: 0xF9/255)
+                    .ignoresSafeArea(edges: .top)
+                HStack {
+                    Button(action: { dismiss() }) {
+                        Image(systemName: "chevron.left")
+                            .font(.headline)
+                            .foregroundStyle(Color(red: 0x00/255, green: 0x97/255, blue: 0xB2/255))
+                            .frame(width: 28, height: 28)
+                            .background(
+                                Circle()
+                                    .stroke(Color(red: 0x00/255, green: 0x97/255, blue: 0xB2/255), lineWidth: 2)
+                            )
+                    }
+                    Spacer()
+                    Text("Konto erstellen")
+                        .font(.headline)
+                        .foregroundStyle(Color(red: 0x00/255, green: 0x97/255, blue: 0xB2/255))
+                    Spacer()
+                    Rectangle().fill(Color.clear).frame(width: 24, height: 1)
+                }
+                .padding(.horizontal, 16)
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 56)
+
+            VStack(spacing: 52) {
+                
+                Text("Bitte wählen sie aus.")
+                    .font(.title2.weight(.semibold))
+                    .foregroundStyle(Color(red: 0x21/255, green: 0x9E/255, blue: 0xBC/255))
+                    .padding(.top, 12)
+                    .padding(.horizontal, 16)
+                
+                VStack(spacing: 14) {
+                    Button(action: {
+                        selectedRoleToCreate = .einnehmer
+                        navigateToCreate = true
+                    }) {
+                        Text("selbstständiger\nEinnehmer")
+                            .multilineTextAlignment(.center)
+                            .font(.system(size: 22, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .frame(width: 280, height: 64)
+                            .background(Color(red: 0xFB/255, green: 0x85/255, blue: 0x00/255))
+                            .clipShape(Capsule())
+                    }
+                    Text("Sind Sie die Person, die\nselbständig Medikamente einnimmt?")
+                        .font(.footnote)
+                        .foregroundStyle(Color(red: 0x85/255, green: 0x92/255, blue: 0x99/255))
+                        .multilineTextAlignment(.center)
+                }
+                .padding(.vertical, 8)
+                
+                VStack(spacing: 14) {
+                    Button(action: {
+                        selectedRoleToCreate = .betreuer
+                        navigateToCreate = true
+                    }) {
+                        Text("Betreuer")
+                            .font(.system(size: 22, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .frame(width: 280, height: 64)
+                            .background(Color(red: 0xFB/255, green: 0x85/255, blue: 0x00/255))
+                            .clipShape(Capsule())
+                    }
+                    Text("Sind Sie die Person, die einen\nEinnehmer beobachtet?\nDiese App-Version verknüpft den Betreuer\nmit dem betreuten Einnehmer.")
+                        .font(.footnote)
+                        .foregroundStyle(Color(red: 0x85/255, green: 0x92/255, blue: 0x99/255))
+                        .multilineTextAlignment(.center)
+                }
+                .padding(.vertical, 8)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 24)
+            .padding(.bottom, 12)
+            Spacer()
+        }
+        .navigationBarBackButtonHidden(true)
+        .background(
+            Color(red: 0xD4/255, green: 0xF2/255, blue: 0xF9/255)
+                .ignoresSafeArea()
+        )
+        .navigationDestination(isPresented: $navigateToCreate) { CreateAccountView(selectedRole: selectedRoleToCreate) }
     }
 }
 
@@ -336,99 +430,6 @@ struct CreateAccountView: View {
     }
 }
 
-struct AccountRoleSelectionView: View {
-    @Environment(\.dismiss) private var dismiss
-    @State private var navigateToCreate: Bool = false
-    @State private var selectedRoleToCreate: CreateAccountView.RoleOption = .einnehmer
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            ZStack {
-                Color(red: 0xF6/255, green: 0xF8/255, blue: 0xF9/255)
-                    .ignoresSafeArea(edges: .top)
-                HStack {
-                    Button(action: { dismiss() }) {
-                        Image(systemName: "chevron.left")
-                            .font(.headline)
-                            .foregroundStyle(Color(red: 0x00/255, green: 0x97/255, blue: 0xB2/255))
-                            .frame(width: 28, height: 28)
-                            .background(
-                                Circle()
-                                    .stroke(Color(red: 0x00/255, green: 0x97/255, blue: 0xB2/255), lineWidth: 2)
-                            )
-                    }
-                    Spacer()
-                    Text("Konto erstellen")
-                        .font(.headline)
-                        .foregroundStyle(Color(red: 0x00/255, green: 0x97/255, blue: 0xB2/255))
-                    Spacer()
-                    Rectangle().fill(Color.clear).frame(width: 24, height: 1)
-                }
-                .padding(.horizontal, 16)
-            }
-            .frame(maxWidth: .infinity)
-            .frame(height: 56)
-
-            VStack(spacing: 52) {
-                
-                Text("Bitte wählen sie aus.")
-                    .font(.title2.weight(.semibold))
-                    .foregroundStyle(Color(red: 0x21/255, green: 0x9E/255, blue: 0xBC/255))
-                    .padding(.top, 12)
-                    .padding(.horizontal, 16)
-                
-                VStack(spacing: 14) {
-                    Button(action: {
-                        selectedRoleToCreate = .einnehmer
-                        navigateToCreate = true
-                    }) {
-                        Text("selbstständiger\nEinnehmer")
-                            .multilineTextAlignment(.center)
-                            .font(.system(size: 22, weight: .semibold))
-                            .foregroundStyle(.white)
-                            .frame(width: 280, height: 64)
-                            .background(Color(red: 0xFB/255, green: 0x85/255, blue: 0x00/255))
-                            .clipShape(Capsule())
-                    }
-                    Text("Sind Sie die Person, die\nselbständig Medikamente einnimmt?")
-                        .font(.footnote)
-                        .foregroundStyle(Color(red: 0x85/255, green: 0x92/255, blue: 0x99/255))
-                        .multilineTextAlignment(.center)
-                }
-                .padding(.vertical, 8)
-                
-                VStack(spacing: 14) {
-                    Button(action: {
-                        selectedRoleToCreate = .betreuer
-                        navigateToCreate = true
-                    }) {
-                        Text("Betreuer")
-                            .font(.system(size: 22, weight: .semibold))
-                            .foregroundStyle(.white)
-                            .frame(width: 280, height: 64)
-                            .background(Color(red: 0xFB/255, green: 0x85/255, blue: 0x00/255))
-                            .clipShape(Capsule())
-                    }
-                    Text("Sind Sie die Person, die einen\nEinnehmer beobachtet?\nDiese App-Version verknüpft den Betreuer\nmit dem betreuten Einnehmer.")
-                        .font(.footnote)
-                        .foregroundStyle(Color(red: 0x85/255, green: 0x92/255, blue: 0x99/255))
-                        .multilineTextAlignment(.center)
-                }
-                .padding(.vertical, 8)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.horizontal, 24)
-            .padding(.bottom, 12)
-            Spacer()
-        }
-        .navigationBarBackButtonHidden(true)
-        .background(
-            Color(red: 0xD4/255, green: 0xF2/255, blue: 0xF9/255)
-                .ignoresSafeArea()
-        )
-        .navigationDestination(isPresented: $navigateToCreate) { CreateAccountView(selectedRole: selectedRoleToCreate) }
-    }
-}
 
 struct SignInRoleSelectionView: View {
     @Environment(\.dismiss) private var dismiss
@@ -726,7 +727,47 @@ struct SignInFormView: View {
     }
 }
 
+struct IntroView: View {
+    var body: some View {
+        ZStack{
+            Color(red: 0x21/255, green: 0x9E/255, blue: 0xBC/255)
+                .ignoresSafeArea()
+            VStack(spacing: 12) {
+                Image("Logo")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 200)
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                Text("MedReminder")
+                    .font(.system(size: 28, weight: .semibold))
+                    .foregroundStyle(.white)
+            }
+        }
+    }
+}
+
+struct RootView: View {
+    @State private var showIntro: Bool = true
+    var body: some View {
+        ZStack {
+            LoginScreen()
+                .opacity(showIntro ? 0 : 1)
+            if showIntro {
+                IntroView()
+                    .transition(.opacity)
+            }
+        }
+        .onAppear {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                withAnimation(.easeInOut(duration: 0.4)) {
+                    showIntro = false
+                }
+            }
+        }
+    }
+}
+
 #Preview {
-    LoginScreen()
+    RootView()
 }
 
