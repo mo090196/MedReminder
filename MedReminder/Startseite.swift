@@ -148,19 +148,19 @@ struct Startseite: View {
     struct NavButton: View {
         let icon: String
         let text: String
-        let isActive: Bool   // 👈 NEU
+        let isActive: Bool   
         
         var body: some View {
             VStack(spacing: 4) {
                 Image(systemName: icon)
                     .font(.system(
-                        size: isActive ? 70: 58,   // 👈 Größe
+                        size: isActive ? 70: 58,
                         weight: .semibold
                     ))
                 
                 Text(text)
                     .font(.system(
-                        size: isActive ? 22:20,   // 👈 Textgröße
+                        size: isActive ? 22:20,
                         weight: .bold
                     ))
             }
@@ -169,7 +169,7 @@ struct Startseite: View {
             .foregroundColor(
                 isActive
                 ? .white
-                : .white.opacity(0.7)   // 👈 verblassen
+                : .white.opacity(0.7)
             )
         }
     }
