@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct LoginScreen: View {
+    @Binding var isLoggedIn: Bool
+
     @State private var showCreateAccount = false
     @State private var showSignIn = false
     var body: some View {
@@ -86,16 +88,17 @@ struct LoginScreen: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             .navigationDestination(isPresented: $showCreateAccount) {
-                AccountRoleSelectionView()
+                AccountRoleSelectionView(isLoggedIn: $isLoggedIn)
             }
             .navigationDestination(isPresented: $showSignIn) {
-                SignInRoleSelectionView()
+                SignInRoleSelectionView(isLoggedIn: $isLoggedIn)
+            }
             }
         }
     }
-}
 
 struct AccountRoleSelectionView: View {
+    @Binding var isLoggedIn: Bool
     @Environment(\.dismiss) private var dismiss
     @State private var navigateToCreate: Bool = false
     @State private var selectedRoleToCreate: CreateAccountView.RoleOption = .einnehmer
@@ -185,11 +188,14 @@ struct AccountRoleSelectionView: View {
             Color(red: 0xD4/255, green: 0xF2/255, blue: 0xF9/255)
                 .ignoresSafeArea()
         )
-        .navigationDestination(isPresented: $navigateToCreate) { CreateAccountView(selectedRole: selectedRoleToCreate) }
+        .navigationDestination(isPresented: $navigateToCreate) {
+            CreateAccountView(selectedRole: selectedRoleToCreate, isLoggedIn: $isLoggedIn)
+        }
     }
 }
 
 struct CreateAccountView: View {
+    @Binding var isLoggedIn: Bool
     @Environment(\.dismiss) private var dismiss
     @State private var email: String = ""
     @State private var password: String = ""
@@ -206,8 +212,9 @@ struct CreateAccountView: View {
         var id: String { rawValue }
     }
     
-    init(selectedRole: RoleOption = .einnehmer) {
+    init(selectedRole: RoleOption = .einnehmer, isLoggedIn: Binding<Bool>) {
         _selectedRole = State(initialValue: selectedRole)
+        _isLoggedIn = isLoggedIn
     }
     
     private var isEmailValid: Bool {
@@ -425,13 +432,16 @@ struct CreateAccountView: View {
         isCreating = true
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             isCreating = false
-            dismiss()
+            withAnimation(.easeInOut(duration: 0.45)) {
+                isLoggedIn = true
+            }
         }
     }
 }
 
 
 struct SignInRoleSelectionView: View {
+    @Binding var isLoggedIn: Bool
     @Environment(\.dismiss) private var dismiss
     @State private var navigateToSignIn: Bool = false
     @State private var selectedRoleToSignIn: CreateAccountView.RoleOption = .einnehmer
@@ -541,11 +551,14 @@ struct SignInRoleSelectionView: View {
             Color(red: 0xD4/255, green: 0xF2/255, blue: 0xF9/255)
                 .ignoresSafeArea()
         )
-        .navigationDestination(isPresented: $navigateToSignIn) { SignInFormView(selectedRole: selectedRoleToSignIn) }
+        .navigationDestination(isPresented: $navigateToSignIn) {
+            SignInFormView(selectedRole: selectedRoleToSignIn, isLoggedIn: $isLoggedIn)
+        }
     }
 }
 
 struct SignInFormView: View {
+    @Binding var isLoggedIn: Bool
     @Environment(\.dismiss) private var dismiss
     @State private var email: String = ""
     @State private var password: String = ""
@@ -553,8 +566,9 @@ struct SignInFormView: View {
     @State private var selectedRole: CreateAccountView.RoleOption
     @State private var showPassword: Bool = false
 
-    init(selectedRole: CreateAccountView.RoleOption = .einnehmer) {
+    init(selectedRole: CreateAccountView.RoleOption = .einnehmer, isLoggedIn: Binding<Bool>) {
         _selectedRole = State(initialValue: selectedRole)
+        _isLoggedIn = isLoggedIn
     }
 
     private var isEmailValid: Bool { email.contains("@") }
@@ -722,7 +736,9 @@ struct SignInFormView: View {
         isSigningIn = true
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             isSigningIn = false
-            dismiss()
+            withAnimation(.easeInOut(duration: 0.45)) {
+                isLoggedIn = true
+            }
         }
     }
 }
@@ -747,10 +763,12 @@ struct IntroView: View {
 }
 
 struct RootView: View {
+    @Binding var isLoggedIn: Bool   // ← Add this
     @State private var showIntro: Bool = true
+
     var body: some View {
         ZStack {
-            LoginScreen()
+            LoginScreen(isLoggedIn: $isLoggedIn)   // ← pass binding to LoginScreen
                 .opacity(showIntro ? 0 : 1)
             if showIntro {
                 IntroView()
@@ -768,6 +786,5 @@ struct RootView: View {
 }
 
 #Preview {
-    RootView()
+    RootView(isLoggedIn: .constant(false))
 }
-
