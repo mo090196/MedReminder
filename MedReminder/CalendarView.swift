@@ -25,16 +25,6 @@ struct CalendarView: View {
             }
             .navigationTitle("Kalender")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button {
-                        dismiss()
-                    } label: {
-                        Image(systemName: "chevron.backward")
-                    }
-                    .accessibilityLabel("Zurück")
-                }
-            }
             .onAppear(perform: preloadDemoData)
             .sheet(item: $showingDetail, content: { item in
                 IntakeDetailSheet(date: item.date, status: statusFor(item.date))

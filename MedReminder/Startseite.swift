@@ -1,101 +1,121 @@
-//
-//  Startseite.swift
-//  MedReminder
-//
-//  Created by TA602 on 19.01.26.
-//
-
 import SwiftUI
 
 struct Startseite: View {
+    @State private var navigateToHinzufuegen = false
+    @State private var navigateToCalendar = false
+    @State private var navigateToUebersicht = false
+
     var body: some View {
-        ZStack {
-            LinearGradient(
-                colors: [
-                    Color(red: 35/255, green: 150/255, blue: 185/255),
-                    Color(red: 170/255, green: 225/255, blue: 245/255)
+        NavigationStack {
+            ZStack {
+                Color(red: 227/255, green: 250/255, blue: 255/255)
+                    .ignoresSafeArea()
+                    .overlay(
+                Circle()
+                       .fill(Color(red: 33/255, green: 158/255, blue: 188/255))
+                       .frame(width: 1000, height: 1000)
+                       .offset(x: -300, y: -845),
+                alignment: .topLeading
+                )
 
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            ).ignoresSafeArea()
-
-            
-            VStack(spacing: 20) {
-                
-                // Kopfbereich
-                HStack(alignment: .center) {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Heute")
-                            .font(.system(size: 50, weight: .bold))
-                            .foregroundColor(.white)
-                        
-                        Text("Montag, Dezember 8")
-                            .font(.system(size: 30, weight: .semibold))
-                            .foregroundColor(.black)
-                    }
-                    
-                    Spacer()
-                    
-                    // Oranger Plus-Button rechts
-                    Button(action: { print("Neues Medikament hinzufügen")
-                    }) {
-                        ZStack {
-                            // Orange gefüllte Kugel (größer)
-                            Image(systemName: "circle.fill")
-                                .foregroundColor(.orange)
-                                .font(.system(size: 55))
-                            
-                            // Weißer Kreis (etwas kleiner)
-                            Image(systemName: "circle")
+                VStack(spacing: 20) {
+                    // Kopfbereich
+                    HStack(alignment: .center) {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Heute")
+                                .font(.system(size: 50, weight: .bold))
                                 .foregroundColor(.white)
-                                .font(.system(size: 49))
                             
-                            // Plus-Zeichen (leicht kleiner)
-                            Image(systemName: "plus")
-                                .foregroundColor(.white)
-                                .font(.system(size: 27))
-                                .fontWeight(.bold)
+                            Text("Montag, Dezember 8")
+                                .font(.system(size: 30, weight: .semibold))
+                                .foregroundColor(.black)
                         }
-                        .accessibilityLabel("Medikament hinzufügen")
+
+                        Spacer()
+
+                        // Orange Plus-Button → HinzufügenView
+                        Button(action: { navigateToHinzufuegen = true }) {
+                            ZStack {
+                                Image(systemName: "circle.fill")
+                                    .foregroundColor(.orange)
+                                    .font(.system(size:60))
+                                Image(systemName: "circle")
+                                    .foregroundColor(.white)
+                                    .font(.system(size: 45))
+                                Image(systemName: "plus")
+                                    .foregroundColor(.white)
+                                    .font(.system(size: 30))
+                                    .fontWeight(.bold)
+                            }
+                        }
                     }
-                }
-                .padding()
-                .frame(maxWidth: .infinity, alignment: .leading)
-                
-                
-                
-                
-                //  Einnahmen
-                ScrollView {
-                    VStack(spacing: 15) {
-                        EinnahmeKarte(name: "Ibuprofen", zeit: "13:30")
-                        EinnahmeKarte(name: "Vitamine", zeit: "16:30")
-                        EinnahmeKarte(name: "Insulin", zeit: "19:30")
+                    .padding()
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                    // Einnahmen ScrollView
+                    ScrollView {
+                        VStack(spacing: 25) {
+                            EinnahmeKarte(name: "Ibuprofen", zeit: "13:30")
+                            EinnahmeKarte(name: "Vitamine", zeit: "16:30")
+                            EinnahmeKarte(name: "Insulin", zeit: "19:30")
+                        }
+                        .padding(15)
+                    }
+                    
+
+                    // Navigation unten
+                    HStack {
+                        Button(action: { navigateToUebersicht = true }) {
+                            VStack(spacing: 4) {
+                                Image(systemName:"list.bullet.rectangle")
+                                        .font(.system(size: 50))
+                                Text("Übersicht")
+                                        .font(.system(size: 20, weight: .bold))
+                                                  }
+                                              }
+                                        .foregroundColor(.white.opacity(0.7))
+                                              
+                        Spacer()
+                        VStack{
+                            Image(systemName: "house.fill")
+                                .font(.system(size: 60, weight: .bold))
+                            Text("Übersicht")
+                                .font(.system(size: 20, weight: .bold))
+                        }
+                        .foregroundColor(.white)
+
                         
+                        Spacer()
+                        
+                        // Calendar button → navigates to CalendarView
+                        Button(action: { navigateToCalendar = true }) {
+                            VStack(spacing: 4) {
+                                Image(systemName: "calendar")
+                                    .font(.system(size: 50))
+                                Text("Kalender")
+                                    .font(.system(size: 20, weight: .bold))
+                            }
+                        }
+                        .foregroundColor(.white.opacity(0.7))
                     }
-                    .padding(5)
+                    .padding(13)
+                    .background(Color(red: 35/255, green: 150/255, blue: 185/255))
+                    .cornerRadius(30)
                 }
-                
-                //  Navigation unten
-                HStack {
-                    NavButton(icon:"list.bullet.rectangle",text: "Übersicht", isActive: false)
-                        .font(.system(size: 55, weight:.semibold))
-                    
-                    Spacer()
-                    
-                    NavButton(icon: "house.fill", text:"Einnahmen", isActive: true)
-                    
-                    Spacer()
-                        .font(.system(size: 55))
-                    
-                    NavButton(icon: "calendar", text:"Kalender",isActive: false)
-                }
-                .font(.system(size: 55))
-                .padding(13) .background (Color(red: 35/255, green: 150/255, blue: 185/255)) .cornerRadius(16) } .edgesIgnoringSafeArea(.bottom)
+            }
+            // NavigationLinks für programmatische Navigation
+            .navigationDestination(isPresented: $navigateToHinzufuegen) {
+                HinzufügenView()
+            }
+            .navigationDestination(isPresented: $navigateToCalendar) {
+                CalendarView()
+            }
+            .navigationDestination(isPresented: $navigateToUebersicht) {
+                UebersichtView().environmentObject(MedicationStore())
+            }
+            }
         }
     }
-    
     //  Einnahme-Karte
     struct EinnahmeKarte: View {
         let name: String
@@ -139,40 +159,12 @@ struct Startseite: View {
                 }
             }
             .background(Color.white)
-            .cornerRadius(15)
+            .cornerRadius(20)
             .shadow(radius: 4)
         }
     }
     
-    // Button unten
-    struct NavButton: View {
-        let icon: String
-        let text: String
-        let isActive: Bool   
-        
-        var body: some View {
-            VStack(spacing: 4) {
-                Image(systemName: icon)
-                    .font(.system(
-                        size: isActive ? 70: 58,
-                        weight: .semibold
-                    ))
-                
-                Text(text)
-                    .font(.system(
-                        size: isActive ? 22:20,
-                        weight: .bold
-                    ))
-            }
-            .frame(height: 90)
-            .padding(3)
-            .foregroundColor(
-                isActive
-                ? .white
-                : .white.opacity(0.7)
-            )
-        }
-    }
+
     
     
     //  Vorschau
@@ -182,7 +174,6 @@ struct Startseite: View {
         }
     }
     
-}
 #Preview {
     Startseite()
 }

@@ -5,7 +5,8 @@ import Foundation
 struct HinzufügenView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
-
+    @State private var savedMedication: Medication? = nil
+    
     //Eingaben
     @State private var name: String = ""
     @State private var note: String = ""
@@ -14,7 +15,7 @@ struct HinzufügenView: View {
     @State private var frequency: String = ""
     
     @State private var selectedWeekdays: Set<Int> = [] // 0 = Montag, 6 = Sonntag (angepasst)
-
+    
     @State private var nameEdited: Bool = false
     @State private var startDateEdited: Bool = false
     @State private var timeEdited: Bool = false
@@ -56,13 +57,13 @@ struct HinzufügenView: View {
                     
                     DatePicker("Beginn", selection: $startDate, displayedComponents: .date)
                         .onChange(of: startDate) { _ in startDateEdited = true }
-                        // entfernt RequiredFieldModifier für startDate
+                    // entfernt RequiredFieldModifier für startDate
                 }
-
+                
                 Section("Erinnerung") {
                     DatePicker("Uhrzeit", selection: $time, displayedComponents: .hourAndMinute)
                         .onChange(of: time) { _ in timeEdited = true }
-                        // entfernt RequiredFieldModifier für time
+                    // entfernt RequiredFieldModifier für time
                     
                     Picker("Häufigkeit", selection: $frequency) {
                         Text("Bitte wählen").tag("")
@@ -79,22 +80,25 @@ struct HinzufügenView: View {
                     }
                     .modifier(RequiredFieldModifier(isInvalid: frequencyEdited && frequency.isEmpty))
                 }
-
+                
                 if frequency == "weekdays" {
                     Section("Wochentage") {
                         WeekdaysLiquidGlassSelection(selectedWeekdays: $selectedWeekdays)
                     }
                 }
-
+                
                 Section {
-                    Button {
-                        nameEdited = true; startDateEdited = true; timeEdited = true;
+                    Button(action: {
+                        nameEdited = true
+                        startDateEdited = true
+                        timeEdited = true
                         if frequency.isEmpty { frequencyEdited = true }
+                        
                         guard !name.isEmpty, startDateEdited, timeEdited, !frequency.isEmpty else { return }
-                        saveMedication()
-                        lastSummary = MedicationSummary(name: name, note: note.isEmpty ? nil : note, startDate: startDate, time: time, frequency: frequency, weekdays: selectedWeekdays)
-                        showSummary = true
-                    } label: {
+                        
+                        let med = saveMedication()  // Make sure this returns the Medication object
+                        savedMedication = med
+                    }) {
                         Text("Speichern")
                             .bold()
                             .font(.headline)
@@ -104,38 +108,41 @@ struct HinzufügenView: View {
                             .background(Color.accentColor)
                             .cornerRadius(12)
                             .shadow(radius: 4)
-                    }
-                }
+                    }               }
             }
             .scrollContentBackground(.hidden)
             .environment(\.locale, Locale(identifier: "de_DE"))
         }
-        .navigationTitle("neues Medikament")
+        .navigationTitle("Neues Medikament")
         .toolbarTitleDisplayMode(.automatic)
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Abbrechen") { dismiss() }
-            }
-        }
         .navigationDestination(isPresented: $showSummary) {
             if let summary = lastSummary {
                 MedicationSummaryView(summary: summary)
             }
         }
+        .navigationDestination(item: $savedMedication) { med in
+            MedicationSummaryView(
+                summary: HinzufügenView.MedicationSummary(
+                    name: med.name,
+                    note: med.note,
+                    startDate: med.startDate,
+                    time: time,
+                    frequency: frequency,
+                    weekdays: selectedWeekdays
+                )
+            )
+        }
         
     }
-
-    private func saveMedication() {
-        // Medikament anlegen
+    
+    private func saveMedication() -> Medication {
         let med = Medication(
             name: name.trimmingCharacters(in: .whitespaces),
             note: note.isEmpty ? nil : note,
             startDate: startDate
         )
-
-        // Uhrzeit in Stunden/Minuten umwandeln
+        
         let comps = Calendar.current.dateComponents([.hour, .minute], from: time)
-
         let schedule = MedicationSchedule(
             medication: med,
             timeHour: comps.hour ?? 8,
@@ -143,23 +150,23 @@ struct HinzufügenView: View {
             frequency: frequency,
             startDate: startDate
         )
-
         med.schedules.append(schedule)
         
-        // selectedWeekdays enthält die Indizes (0=Montag..6=Sonntag) der gewählten Tage
-        // Hier kann die weitere Verarbeitung der Wochentage ergänzt werden
-
-        // in DB speichern
         context.insert(med)
-
-        do {
-            try context.save()
-            dismiss()
-        } catch {
-            // Fehlermeldung
-            print("Fehler beim Speichern: \(error)")
-        }
+        try? context.save()
+        
+        return med
     }
+}
+
+struct MedicationSummary: Identifiable {
+    let id = UUID()
+    let name: String
+    let note: String?
+    let startDate: Date
+    let time: Date
+    let frequency: String
+    let weekdays: Set<Int>
 }
 
 struct WeekdaysLiquidGlassSelection: View {
