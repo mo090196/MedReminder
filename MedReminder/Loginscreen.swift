@@ -744,31 +744,88 @@ struct SignInFormView: View {
 }
 
 struct IntroView: View {
+    
+    @State private var moveDown = false
+    @State private var circleUp = false
+    @State private var welcomeOpacity = 0.0
+
     var body: some View {
-        ZStack{
-            Color(red: 0x21/255, green: 0x9E/255, blue: 0xBC/255)
-                .ignoresSafeArea()
+        ZStack {
+
             VStack(spacing: 12) {
-                Image("Logo")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 200)
-                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                Text("MedReminder")
-                    .font(.system(size: 28, weight: .semibold))
-                    .foregroundStyle(.white)
+                ZStack {
+                    Circle()
+                        .fill(Color(red: 33/255, green: 158/255, blue: 188/255))
+                        .frame(width: 1000, height: 1000)
+
+                    VStack {
+                        Image("Logo")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 200)
+                            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+
+                        Text("MedReminder")
+                            .font(.system(size: 40, weight: .semibold))
+                            .foregroundStyle(.white)
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .ignoresSafeArea()
+            .offset(y: moveDown ? 1000 : 0)
+            .animation(.easeInOut(duration: 1), value: moveDown)
+
+            CircleView()
+                .offset(y: circleUp ? 0 : 1000)
+                .animation(.easeInOut(duration: 1), value: circleUp)
+            VStack{
+                Text("Willkommen")
+                Text("bei MedReminder")
+            }
+            .font(.system(size: 40, weight: .bold))
+            .foregroundColor(.white)
+            .opacity(welcomeOpacity)
+            .zIndex(1)
+
+        }
+        .onAppear {
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                moveDown = true
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                circleUp = true
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                withAnimation(.easeIn(duration: 0.6)) {
+                    welcomeOpacity = 1
+                }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    circleUp = false
+                }
             }
         }
     }
 }
 
+struct CircleView: View {
+    var body: some View {
+        Circle()
+            .fill(Color(red: 33/255, green: 158/255, blue: 188/255))
+            .frame(width: 1000, height: 1000)
+            .offset(y: 200)
+            .ignoresSafeArea()
+    }
+}
+
 struct RootView: View {
-    @Binding var isLoggedIn: Bool   // ← Add this
+    @Binding var isLoggedIn: Bool
     @State private var showIntro: Bool = true
 
     var body: some View {
         ZStack {
-            LoginScreen(isLoggedIn: $isLoggedIn)   // ← pass binding to LoginScreen
+            LoginScreen(isLoggedIn: $isLoggedIn)
                 .opacity(showIntro ? 0 : 1)
             if showIntro {
                 IntroView()
@@ -776,7 +833,7 @@ struct RootView: View {
             }
         }
         .onAppear {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 4.5) {
                 withAnimation(.easeInOut(duration: 0.4)) {
                     showIntro = false
                 }
