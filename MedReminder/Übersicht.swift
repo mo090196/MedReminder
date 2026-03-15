@@ -50,8 +50,7 @@ struct UebersichtView: View {
                 // Mittlerer Bereich: Scrollbare Liste der Medikamentenkarten
                 ScrollView {
                     VStack(spacing: 16) { // ABSTAND: Vertikaler Abstand zwischen Karten (wirkt auf Gesamthöhe der Liste, nicht einzelne Kartenhöhe)
-                        ForEach(store.medications) { med in
-                            // Darstellung eines einzelnen Eintrags als Karte
+                        ForEach(store.medications.isEmpty ? ExampleMedications.meds : store.medications) { med in                            // Darstellung eines einzelnen Eintrags als Karte
                             MedicationCard(
                                 time: med.time,
                                 name: med.name,
@@ -60,14 +59,6 @@ struct UebersichtView: View {
                             )
                         }
                         // Platzhalter, falls noch keine Einträge vorhanden sind (Demo-Inhalt)
-                        if store.medications.isEmpty {
-                            MedicationCard(
-                                time: Calendar.current.date(bySettingHour: 13, minute: 30, second: 0, of: Date()) ?? Date(),
-                                name: "Beispielmedikament",
-                                details: "Vor dem Essen",
-                                isActive: true
-                            )
-                        }
                     }
                     .padding(.horizontal, 20)
                     .padding(.vertical, 24)
@@ -245,15 +236,35 @@ private extension Color {
     }
 }
 
-// Vorschau mit Beispiel-Daten
-#Preview {
-    let store = MedicationStore()
-    store.medications = [
-        .init(time: Calendar.current.date(bySettingHour: 13, minute: 30, second: 0, of: Date())!, name: "Ibuprofen", details: nil, isActive: true),
-        .init(time: Calendar.current.date(bySettingHour: 16, minute: 0, second: 0, of: Date())!, name: "Vitamine", details: nil, isActive: true),
-        .init(time: Calendar.current.date(bySettingHour: 19, minute: 0, second: 0, of: Date())!, name: "Insulin", details: "Vor dem Essen", isActive: false)
+struct ExampleMedications {
+    
+    static let meds: [MedicationStore.Medication] = [
+        MedicationStore.Medication(
+            time: Calendar.current.date(bySettingHour: 13, minute: 30, second: 0, of: Date())!,
+            name: "Ibuprofen",
+            details: nil,
+            isActive: true
+        ),
+        
+        MedicationStore.Medication(
+            time: Calendar.current.date(bySettingHour: 16, minute: 0, second: 0, of: Date())!,
+            name: "Vitamine",
+            details: nil,
+            isActive: true
+        ),
+        
+        MedicationStore.Medication(
+            time: Calendar.current.date(bySettingHour: 19, minute: 0, second: 0, of: Date())!,
+            name: "Insulin",
+            details: "Vor dem Essen",
+            isActive: false
+        )
     ]
-    return UebersichtView()
-        .environmentObject(store)
 }
 
+
+// Vorschau mit Beispiel-Daten
+#Preview {
+    UebersichtView()
+        .environmentObject(MedicationStore())
+}
