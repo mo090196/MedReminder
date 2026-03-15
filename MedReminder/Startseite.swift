@@ -68,9 +68,9 @@ struct Startseite: View {
                         Button(action: { navigateToUebersicht = true }) {
                             VStack(spacing: 4) {
                                 Image(systemName:"list.bullet.rectangle")
-                                        .font(.system(size: 50))
+                                        .font(.system(size: 55))
                                 Text("Übersicht")
-                                        .font(.system(size: 20, weight: .bold))
+                                        .font(.system(size: 22, weight: .bold))
                                                   }
                                               }
                                         .foregroundColor(.white.opacity(0.7))
@@ -80,7 +80,7 @@ struct Startseite: View {
                             Image(systemName: "house.fill")
                                 .font(.system(size: 60, weight: .bold))
                             Text("Startseite")
-                                .font(.system(size: 20, weight: .bold))
+                                .font(.system(size: 22, weight: .bold))
                         }
                         .foregroundColor(.white)
 
@@ -91,16 +91,18 @@ struct Startseite: View {
                         Button(action: { navigateToCalendar = true }) {
                             VStack(spacing: 4) {
                                 Image(systemName: "calendar")
-                                    .font(.system(size: 50))
+                                    .font(.system(size: 55))
                                 Text("Kalender")
-                                    .font(.system(size: 20, weight: .bold))
+                                    .font(.system(size: 22, weight: .bold))
                             }
                         }
                         .foregroundColor(.white.opacity(0.7))
                     }
-                    .padding(13)
+                    .padding()
                     .background(Color(red: 35/255, green: 150/255, blue: 185/255))
-                    .cornerRadius(30)
+                    .clipShape(UnevenRoundedRectangle(topLeadingRadius: 30, topTrailingRadius: 30))
+                    .offset(y: 35)
+                    .ignoresSafeArea(edges: .bottom)
                 }
             }
             // NavigationLinks für programmatische Navigation
