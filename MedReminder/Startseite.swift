@@ -79,7 +79,7 @@ struct Startseite: View {
                         VStack{
                             Image(systemName: "house.fill")
                                 .font(.system(size: 60, weight: .bold))
-                            Text("Übersicht")
+                            Text("Startseite")
                                 .font(.system(size: 20, weight: .bold))
                         }
                         .foregroundColor(.white)
