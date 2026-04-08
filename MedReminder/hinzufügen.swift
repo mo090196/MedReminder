@@ -28,6 +28,7 @@ struct HinzufügenView: View {
     @State private var showingFrequencySheet = false
     @State private var showingStartDateSheet = false
     @State private var showingEndDateSheet = false
+    @State private var goHome = false
     
     struct MedicationSummary: Identifiable {
         let id = UUID()
@@ -85,6 +86,8 @@ struct HinzufügenView: View {
 
             ScrollView {
                 VStack(spacing: 16) {
+                    NavigationLink(destination: Startseite(), isActive: $goHome) { EmptyView() }
+
                     ZStack {
                         RoundedRectangle(cornerRadius: 20, style: .continuous)
                             .fill(Color(red: 0.80, green: 0.94, blue: 0.96)) // leicht aufgehellt, ohne Schatten
@@ -295,7 +298,7 @@ struct HinzufügenView: View {
         .toolbarTitleDisplayMode(.automatic)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button(action: { dismiss() }) {
+                Button(action: { goHome = true }) {
                     Image(systemName: "xmark.circle")
                         .font(.system(size: 28, weight: .semibold))
                         .foregroundStyle(Color(red: 0.0, green: 0.6, blue: 0.75))
@@ -469,6 +472,9 @@ struct WeekdaysLiquidGlassSelection: View {
 }
 
 struct MedicationSummaryView: View {
+    @Environment(\.dismiss) private var dismiss
+    @State private var goHome = false
+    
     let summary: HinzufügenView.MedicationSummary
     
     // Manuell definierte Wochentagsinitialen in deutscher Reihenfolge Montag=0 ... Sonntag=6
@@ -490,6 +496,8 @@ struct MedicationSummaryView: View {
                 .ignoresSafeArea()
 
             VStack {
+                NavigationLink(destination: Startseite(), isActive: $goHome) { EmptyView() }
+
                 Spacer(minLength: 24)
 
                 // Karte
@@ -597,7 +605,7 @@ struct MedicationSummaryView: View {
 
                 // Unterer orangener Button
                 Button(action: {
-                    // Abschlussaktion
+                    goHome = true
                 }) {
                     Text("Erinnerung hinzufügen")
                         .font(.headline.weight(.semibold))
