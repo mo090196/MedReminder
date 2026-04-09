@@ -2,7 +2,6 @@ import SwiftUI
 
 struct Startseite: View {
     @EnvironmentObject private var medicationStore: MedicationStore
-    @State private var navigateToHinzufuegen = false
     @State private var navigateToCalendar = false
     @State private var navigateToUebersicht = false
 
@@ -34,8 +33,7 @@ struct Startseite: View {
 
                         Spacer()
 
-                        // Orange Plus-Button → HinzufügenView
-                        Button(action: { navigateToHinzufuegen = true }) {
+                        NavigationLink(destination: HinzufügenView()) {
                             ZStack {
                                 Image(systemName: "circle.fill")
                                     .foregroundColor(.orange)
@@ -62,11 +60,8 @@ struct Startseite: View {
                                     .foregroundColor(.gray)
                                     .padding(.top, 40)
                             } else {
-                                ForEach(medicationStore.medications) { med in
-                                    EinnahmeKarte(
-                                        name: med.name,
-                                        zeit: med.time.formatted(date: .omitted, time: .shortened)
-                                    )
+                                ForEach($medicationStore.medications) { $med in
+                                    EinnahmeKarte(med: $med)
                                 }
                             }
                         }
@@ -117,10 +112,7 @@ struct Startseite: View {
                 }
             }
             .navigationBarBackButtonHidden(true)
-            // NavigationLinks für programmatische Navigation
-            .navigationDestination(isPresented: $navigateToHinzufuegen) {
-                HinzufügenView()
-            }
+
             .navigationDestination(isPresented: $navigateToCalendar) {
                 CalendarView()
             }
@@ -130,61 +122,59 @@ struct Startseite: View {
             }
         }
     }
-    //  Einnahme-Karte
-    struct EinnahmeKarte: View {
-        let name: String
-        let zeit: String
-        @State private var isTaken: Bool = false
-        
-        var body: some View {
-            VStack(spacing: 10) {
-                HStack {
-                    Text(name)
-                        .font(.system(size: 25, weight: .semibold))
-                    
-                    Spacer()
-                    
-                    HStack(spacing: 8)
-                    { ZStack
-                        { Image(systemName: "circle.fill")
-                                .foregroundColor(.black)
-                                .font(.system(size: 22))
-                            
-                            Image(systemName: "clock")
-                                .foregroundColor(.white)
-                                .font(.system(size: 18, weight: .semibold))
-                        }
-                        
-                        Text(zeit)
-                            .font(.system(size: 20, weight: .semibold))
+
+struct EinnahmeKarte: View {
+    @Binding var med: MedicationStore.Medication
+
+    var body: some View {
+        VStack(spacing: 10) {
+            HStack {
+                Text(med.name)
+                    .font(.system(size: 25, weight: .semibold))
+
+                Spacer()
+
+                HStack(spacing: 8) {
+                    ZStack {
+                        Image(systemName: "circle.fill")
+                            .foregroundColor(.black)
+                            .font(.system(size: 22))
+
+                        Image(systemName: "clock")
+                            .foregroundColor(.white)
+                            .font(.system(size: 18, weight: .semibold))
                     }
+
+                    Text(med.time.formatted(date: .omitted, time: .shortened))
+                        .font(.system(size: 20, weight: .semibold))
                 }
-                .padding(25)
-                
-                Button(action: {
-                    withAnimation(.interpolatingSpring(stiffness: 220, damping: 18)) {
-                        isTaken = true
-                    }
-                }) {
-                    Text(isTaken ? "eingenommen" : "jetzt einnehmen")
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 60)
-                        .padding(.horizontal)
-                        .background(Color.orange)
-                        .font(.system(size: 25, weight: .bold))
-                }
-                .disabled(isTaken)
             }
-            .background(Color.white)
-            .cornerRadius(20)
-            .shadow(radius: 4)
-            .scaleEffect(isTaken ? 0.98 : 1.0)
-            .opacity(isTaken ? 0.5 : 1.0)
-            .animation(.interpolatingSpring(stiffness: 220, damping: 18), value: isTaken)
+            .padding(25)
+
+            Button(action: {
+                withAnimation(.interpolatingSpring(stiffness: 220, damping: 18)) {
+                    med.isTaken = true
+                }
+            }) {
+                Text(med.isTaken ? "eingenommen" : "jetzt einnehmen")
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 60)
+                    .padding(.horizontal)
+                    .background(Color.orange)
+                    .font(.system(size: 25, weight: .bold))
+            }
+            .disabled(med.isTaken)
         }
+        .background(Color.white)
+        .cornerRadius(20)
+        .shadow(radius: 4)
+        .scaleEffect(med.isTaken ? 0.98 : 1.0)
+        .opacity(med.isTaken ? 0.5 : 1.0)
+        .animation(.interpolatingSpring(stiffness: 220, damping: 18), value: med.isTaken)
     }
-    
+}
+
 #Preview {
     Startseite()
         .environmentObject(MedicationStore())

@@ -8,13 +8,22 @@ final class MedicationStore: ObservableObject {
         var name: String
         var details: String?
         var isActive: Bool
-        
-        init(id: UUID = UUID(), time: Date, name: String, details: String? = nil, isActive: Bool = true) {
+        var isTaken: Bool
+
+        init(
+            id: UUID = UUID(),
+            time: Date,
+            name: String,
+            details: String? = nil,
+            isActive: Bool = true,
+            isTaken: Bool = false
+        ) {
             self.id = id
             self.time = time
             self.name = name
             self.details = details
             self.isActive = isActive
+            self.isTaken = isTaken
         }
     }
     
