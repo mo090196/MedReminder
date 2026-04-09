@@ -31,6 +31,8 @@ struct HinzufügenView: View {
     @State private var showingEndDateSheet = false
     @State private var goHome = false
     
+    @State private var showTimePicker = false
+    
     struct MedicationSummary: Identifiable {
         let id = UUID()
         let name: String
@@ -107,7 +109,7 @@ struct HinzufügenView: View {
 
                     // TextField mit neuem Hintergrund
                     HStack(spacing: 8) {
-                        TextField("Medikamenten eingeben…", text: $name, onEditingChanged: { editing in
+                        TextField("Medikamenten eingeben", text: $name, onEditingChanged: { editing in
                             if !editing { nameEdited = true }
                         })
                         .textInputAutocapitalization(.words)
@@ -230,51 +232,66 @@ struct HinzufügenView: View {
                     .padding(.horizontal)
 
                     // Time picker inline styled similar to the screenshot context
-                    VStack(spacing: 8) {
-                        HStack {
-                            Text("Uhrzeit")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                            Spacer()
-                            DatePicker("Uhrzeit", selection: $time, displayedComponents: .hourAndMinute)
-                                .labelsHidden()
-                                .onChange(of: time) { _ in timeEdited = true }
-                        }
-                        .padding(12)
-                        .background(
-                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .fill(Color(red: 0.88, green: 0.96, blue: 0.97))
-                        )
+                    // Uhrzeit Header
+                    HStack {
+                        Text("Uhrzeit")
+                            .font(.headline)
+                            .foregroundStyle(Color(red: 0.03, green: 0.26, blue: 0.33))
+                        Spacer()
                     }
+                    .padding(.horizontal)
+
+                    // Uhrzeit-Kapsel
+                    HStack {
+                        DatePicker("Uhrzeit", selection: $time, displayedComponents: .hourAndMinute)
+                            .labelsHidden()
+                            .colorScheme(.dark)
+                            .onChange(of: time) { _ in
+                                timeEdited = true
+                            }
+
+                        Spacer()
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 6)
+                    .background(
+                        Capsule()
+                            .fill(Color(red: 0.0, green: 0.6, blue: 0.75))
+                            .shadow(color: .black.opacity(0.25), radius: 6, x: 0, y: 3)
+                    )
                     .padding(.horizontal)
                     
-                    // Zweite Hinweis-/Notiz-Zeile im selben Stil
-                    HStack(spacing: 8) {
-                        TextField("Hinweis (optional)", text: $note)
-                            .textInputAutocapitalization(.sentences)
-                            .autocorrectionDisabled(false)
-                            .padding(.vertical, 12)
-                            .padding(.leading, 16)
-
-                        Button {
-                            // Optional: Info für Notizfeld
-                        } label: {
-                            Image(systemName: "info.circle")
-                                .font(.system(size: 18, weight: .semibold))
-                                .foregroundColor(.secondary)
-                                .padding(.trailing, 12)
-                        }
+                    // Hinweis Header
+                    HStack {
+                        Text("Hinweis")
+                            .font(.headline)
+                            .foregroundStyle(Color(red: 0.03, green: 0.26, blue: 0.33))
+                        Spacer()
                     }
-                    .background(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(Color(red: 0.88, green: 0.96, blue: 0.97))
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .stroke(Color.clear, lineWidth: 2)
-                    )
                     .padding(.horizontal)
 
+                    // Hinweis-Kapsel
+                    ZStack(alignment: .leading) {
+                        if note.isEmpty {
+                            Text("Optionaler Hinweis")
+                                .foregroundColor(.white.opacity(1.2))
+                                .font(.headline)
+                                .padding(.horizontal, 16)
+                        }
+
+                        TextField("", text: $note)
+                            .foregroundColor(.white)
+                            .font(.headline)
+                            .padding(.horizontal, 16)
+                    }
+                    .padding(.vertical, 14)
+                    .background(
+                        Capsule()
+                            .fill(Color(red: 0.0, green: 0.6, blue: 0.75))
+                            .shadow(color: .black.opacity(0.25), radius: 6, x: 0, y: 3)
+                    )
+                    .padding(.horizontal)
+                    
                     if frequency == "weekdays" {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Wochentage")
@@ -287,26 +304,12 @@ struct HinzufügenView: View {
 
                     Spacer(minLength: 0)
 
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color(red: 0.88, green: 0.96, blue: 0.97))
-                        .frame(height: 8)
-                        .padding(.horizontal)
                 }
             }
         }
         .environment(\.locale, Locale(identifier: "de_DE"))
         .navigationTitle("Neues Medikament")
         .toolbarTitleDisplayMode(.automatic)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button(action: { goHome = true }) {
-                    Image(systemName: "xmark.circle")
-                        .font(.system(size: 28, weight: .semibold))
-                        .foregroundStyle(Color(red: 0.0, green: 0.6, blue: 0.75))
-                    
-                }
-            }
-        }
         .sheet(isPresented: $showingFrequencySheet) {
             NavigationStack {
                 List {

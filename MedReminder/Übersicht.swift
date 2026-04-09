@@ -23,26 +23,34 @@ final class MedicationStore: ObservableObject {
 
 struct UebersichtView: View {
     @EnvironmentObject private var store: MedicationStore
+
     var body: some View {
         Group {
             VStack(spacing: 0) {
                 Header()
-                
+
                 ScrollView {
                     VStack(spacing: 16) {
-                        ForEach(store.medications.isEmpty ? ExampleMedications.meds : store.medications) { med in
-                            MedicationCard(
-                                time: med.time,
-                                name: med.name,
-                                details: med.details,
-                                isActive: med.isActive
-                            )
+                        if store.medications.isEmpty {
+                            Text("Noch keine Medikamente eingetragen")
+                                .font(.system(size: 20, weight: .semibold))
+                                .foregroundColor(.gray)
+                                .padding(.top, 40)
+                        } else {
+                            ForEach(store.medications) { med in
+                                MedicationCard(
+                                    time: med.time,
+                                    name: med.name,
+                                    details: med.details,
+                                    isActive: med.isActive
+                                )
+                            }
                         }
                     }
                     .padding(.horizontal, 20)
                     .padding(.vertical, 24)
                 }
-                
+
                 BottomTabBar()
             }
             .background(Color(hex: 0xE3FAFF))
@@ -50,7 +58,6 @@ struct UebersichtView: View {
         }
     }
 }
-
 private struct Header: View {
     var body: some View {
         ZStack {
@@ -197,33 +204,6 @@ private extension Color {
         self = Color(.sRGB, red: r, green: g, blue: b, opacity: alpha)
     }
 }
-
-struct ExampleMedications {
-    
-    static let meds: [MedicationStore.Medication] = [
-        MedicationStore.Medication(
-            time: Calendar.current.date(bySettingHour: 13, minute: 30, second: 0, of: Date())!,
-            name: "Ibuprofen",
-            details: nil,
-            isActive: true
-        ),
-        
-        MedicationStore.Medication(
-            time: Calendar.current.date(bySettingHour: 16, minute: 0, second: 0, of: Date())!,
-            name: "Vitamine",
-            details: nil,
-            isActive: true
-        ),
-        
-        MedicationStore.Medication(
-            time: Calendar.current.date(bySettingHour: 19, minute: 0, second: 0, of: Date())!,
-            name: "Insulin",
-            details: "Vor dem Essen",
-            isActive: false
-        )
-    ]
-}
-
 
 #Preview {
     UebersichtView()
