@@ -443,8 +443,11 @@ struct HinzufügenView: View {
             time: displayTime,
             name: trimmedName,
             details: note.isEmpty ? nil : note,
-            isActive: true,
-            isTaken: false
+            startDate: startDate,
+            endDate: endDate,
+            frequency: frequency,
+            weekdays: selectedWeekdays,
+            takenDates: []
         )
 
         medicationStore.medications.append(storeMedication)
