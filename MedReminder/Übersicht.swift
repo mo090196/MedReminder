@@ -229,3 +229,4 @@ struct ExampleMedications {
     UebersichtView()
         .environmentObject(MedicationStore())
 }
+

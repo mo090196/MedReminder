@@ -134,6 +134,7 @@ struct Startseite: View {
     struct EinnahmeKarte: View {
         let name: String
         let zeit: String
+        @State private var isTaken: Bool = false
         
         var body: some View {
             VStack(spacing: 10) {
@@ -161,9 +162,11 @@ struct Startseite: View {
                 .padding(25)
                 
                 Button(action: {
-                    print("\(name) eingenommen")
+                    withAnimation(.interpolatingSpring(stiffness: 220, damping: 18)) {
+                        isTaken = true
+                    }
                 }) {
-                    Text("jetzt einnehmen")
+                    Text(isTaken ? "eingenommen" : "jetzt einnehmen")
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .frame(height: 60)
@@ -171,10 +174,14 @@ struct Startseite: View {
                         .background(Color.orange)
                         .font(.system(size: 25, weight: .bold))
                 }
+                .disabled(isTaken)
             }
             .background(Color.white)
             .cornerRadius(20)
             .shadow(radius: 4)
+            .scaleEffect(isTaken ? 0.98 : 1.0)
+            .opacity(isTaken ? 0.5 : 1.0)
+            .animation(.interpolatingSpring(stiffness: 220, damping: 18), value: isTaken)
         }
     }
     
