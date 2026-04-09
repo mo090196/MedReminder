@@ -1,20 +1,9 @@
-//  CalendarView.swift
-//  MedReminder
-//
-//  Created by Assistant on 18.01.26.
-//
-
 import SwiftUI
 
 struct CalendarView: View {
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var medicationStore: MedicationStore
     @State private var selectedDate: Date = .now
-
-    // Simple demo data: map of day (startOfDay) -> taken(true)/missed(false)
-    // In your app, replace this with real persistence from the home confirmation button.
-    @State private var intakeStatus: [Date: Bool] = [:]
-
-    // For popup
     @State private var showingDetail: IntakeDetailItem? = nil
 
     var body: some View {
@@ -25,12 +14,13 @@ struct CalendarView: View {
             }
             .navigationTitle("Kalender")
             .navigationBarTitleDisplayMode(.inline)
-            .onAppear(perform: preloadDemoData)
-            .sheet(item: $showingDetail, content: { item in
-                IntakeDetailSheet(date: item.date, status: statusFor(item.date))
-                    .presentationDetents([.fraction(0.3), .medium])
-            })
-        }
+                    .sheet(item: $showingDetail) { item in
+                        IntakeDetailSheet(
+                            date: item.date,
+                            medications: medicationStore.medications
+                        )
+                        .presentationDetents([.fraction(0.3), .medium])
+                    }        }
     }
 
     private var header: some View {
@@ -45,7 +35,6 @@ struct CalendarView: View {
             .padding(.horizontal)
             .padding(.top, 12)
 
-            // Datumstitel analog Mockup (z. B. So, Jan 17)
             Text(formattedSelectedDateTitle(selectedDate))
                 .font(.headline)
                 .foregroundStyle(.secondary)
@@ -69,12 +58,11 @@ struct CalendarView: View {
             WeekdayHeader()
                 .padding(.horizontal)
 
-            CalendarMonthGrid(monthFor: selectedDate, intakeStatus: intakeStatus, onTapDay: { date in
+            CalendarMonthGrid(monthFor: selectedDate) { date in
                 showingDetail = IntakeDetailItem(date: date)
-            })
+            }
             .padding(.horizontal)
 
-            // Primäre Aktionen analog "Abbrechen" im Mockup
             HStack(spacing: 12) {
                 Button(role: .cancel) {
                     dismiss()
@@ -85,7 +73,6 @@ struct CalendarView: View {
                 .buttonStyle(.bordered)
 
                 Button {
-                    // Platzhalter: hier könnte man z. B. ein Detail öffnen
                 } label: {
                     Text("Fertig")
                         .frame(maxWidth: .infinity)
@@ -103,11 +90,9 @@ struct CalendarView: View {
     private func formattedSelectedDateTitle(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "de_DE")
-        formatter.setLocalizedDateFormatFromTemplate("EEE, MMM d") // z. B. So, Jan 17
+        formatter.setLocalizedDateFormatFromTemplate("EEE, MMM d")
         return formatter.string(from: date)
     }
-
-    // MARK: - Helpers
 
     private let calendar: Calendar = {
         var cal = Calendar(identifier: .gregorian)
@@ -118,28 +103,8 @@ struct CalendarView: View {
     private func startOfDay(_ date: Date) -> Date {
         calendar.startOfDay(for: date)
     }
-
-    private func statusFor(_ date: Date) -> Bool? {
-        intakeStatus[startOfDay(date)]
-    }
-
-    private func preloadDemoData() {
-        // Generate some demo statuses for current month
-        let comps = calendar.dateComponents([.year, .month], from: selectedDate)
-        guard let monthStart = calendar.date(from: comps),
-              let range = calendar.range(of: .day, in: .month, for: monthStart) else { return }
-        var dict: [Date: Bool] = [:]
-        for day in range {
-            if let date = calendar.date(byAdding: .day, value: day - 1, to: monthStart) {
-                // Demo rule: even days taken (green), odd days missed (red)
-                dict[startOfDay(date)] = (day % 2 == 0)
-            }
-        }
-        intakeStatus = dict
-    }
 }
 
-// MARK: - Subviews
 
 private struct MonthHeader: View {
     let date: Date
@@ -195,7 +160,6 @@ private struct WeekdayHeader: View {
 
 private struct CalendarMonthGrid: View {
     let monthFor: Date
-    let intakeStatus: [Date: Bool]
     let onTapDay: (Date) -> Void
 
     private var calendar: Calendar {
@@ -208,7 +172,7 @@ private struct CalendarMonthGrid: View {
         let comps = calendar.dateComponents([.year, .month], from: monthFor)
         let monthStart = calendar.date(from: comps) ?? monthFor
         let daysRange = calendar.range(of: .day, in: .month, for: monthStart) ?? 1..<31
-        let firstWeekday = calendar.component(.weekday, from: monthStart) // 1..7
+        let firstWeekday = calendar.component(.weekday, from: monthStart)
         let leadingEmpty = (firstWeekday - calendar.firstWeekday + 7) % 7
 
         let totalCells = leadingEmpty + daysRange.count
@@ -224,7 +188,7 @@ private struct CalendarMonthGrid: View {
                         } else {
                             let day = index - leadingEmpty + 1
                             let date = calendar.date(byAdding: .day, value: day - 1, to: monthStart) ?? monthStart
-                            DayCell(date: date, isInMonth: true, status: statusFor(date)) {
+                            DayCell(date: date) {
                                 onTapDay(date)
                             }
                         }
@@ -233,101 +197,95 @@ private struct CalendarMonthGrid: View {
             }
         }
     }
-
-    private func startOfDay(_ date: Date) -> Date { calendar.startOfDay(for: date) }
-
-    private func statusFor(_ date: Date) -> Bool? {
-        intakeStatus[startOfDay(date)]
-    }
 }
 
-private struct DayCell: View {
-    let date: Date
-    let isInMonth: Bool
-    let status: Bool? // true = taken(green), false = missed(red), nil = no data
-    let tap: () -> Void
+    private struct DayCell: View {
+        let date: Date
+        let tap: () -> Void
 
-    var body: some View {
-        Button(action: tap) {
-            VStack(spacing: 4) {
+        var body: some View {
+            Button(action: tap) {
                 Text("\(dayNumber(date))")
                     .font(.body)
                     .foregroundStyle(.primary)
                     .frame(maxWidth: .infinity)
-
-                // Small circle marker below the number
-                Circle()
-                    .fill(colorForStatus(status))
-                    .frame(width: 8, height: 8)
-                    .opacity(status == nil ? 0 : 1)
+                    .padding(.vertical, 12)
+                    .contentShape(Rectangle())
             }
-            .padding(.vertical, 8)
-            .frame(maxWidth: .infinity)
-            .contentShape(Rectangle())
+            .buttonStyle(.plain)
         }
-        .buttonStyle(.plain)
-    }
 
-    private func dayNumber(_ date: Date) -> String {
-        let d = Calendar.current.component(.day, from: date)
-        return String(d)
+        private func dayNumber(_ date: Date) -> String {
+            let d = Calendar.current.component(.day, from: date)
+            return String(d)
+        }
     }
-
-    private func colorForStatus(_ status: Bool?) -> Color {
-        guard let status = status else { return .clear }
-        return status ? .green : .red
-    }
-}
 
 private struct IntakeDetailItem: Identifiable, Equatable {
     let id: Date
     let date: Date
     init(date: Date) {
-        // Use startOfDay to ensure stable identity for the same calendar day
         let day = Calendar.current.startOfDay(for: date)
         self.id = day
         self.date = day
     }
 }
+    
+    private struct IntakeDetailSheet: View, Identifiable {
+        let id = UUID()
+        let date: Date
+        let medications: [MedicationStore.Medication]
 
-private struct IntakeDetailSheet: View, Identifiable {
-    let id = UUID()
-    let date: Date
-    let status: Bool?
-
-    var body: some View {
-        VStack(spacing: 12) {
-            Capsule().fill(Color.secondary.opacity(0.3)).frame(width: 40, height: 5).padding(.top, 8)
-            Text(title)
-                .font(.headline)
-            Text(message)
-                .font(.body)
-                .multilineTextAlignment(.center)
-                .foregroundStyle(.secondary)
-            Spacer()
+        private var scheduledMedications: [MedicationStore.Medication] {
+            medications.filter { $0.isScheduled(on: date) }
         }
-        .padding()
-    }
 
-    private var title: String {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "de_DE")
-        f.setLocalizedDateFormatFromTemplate("EEEE, d. MMMM yyyy")
-        return f.string(from: date)
-    }
+        var body: some View {
+            VStack(spacing: 12) {
+                Capsule()
+                    .fill(Color.secondary.opacity(0.3))
+                    .frame(width: 40, height: 5)
+                    .padding(.top, 8)
 
-    private var message: String {
-        switch status {
-        case .some(true):
-            return "Die Einnahme wurde an diesem Tag bestätigt (grün)."
-        case .some(false):
-            return "Die Einnahme wurde an diesem Tag nicht durchgeführt (rot)."
-        case .none:
-            return "Keine Daten zur Einnahme für diesen Tag vorhanden."
+                Text(title)
+                    .font(.headline)
+
+                if scheduledMedications.isEmpty {
+                    Text("Für diesen Tag sind keine Medikamente eingeplant.")
+                        .font(.body)
+                        .multilineTextAlignment(.center)
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(scheduledMedications) { med in
+                        Text(message(for: med))
+                            .font(.body)
+                            .multilineTextAlignment(.center)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                Spacer()
+            }
+            .padding()
+        }
+
+        private var title: String {
+            let f = DateFormatter()
+            f.locale = Locale(identifier: "de_DE")
+            f.setLocalizedDateFormatFromTemplate("EEEE, d. MMMM yyyy")
+            return f.string(from: date)
+        }
+
+        private func message(for med: MedicationStore.Medication) -> String {
+            if med.isTaken(on: date) {
+                return "\(med.name) wurde an diesem Tag eingenommen."
+            } else {
+                return "\(med.name) wurde an diesem Tag nicht eingenommen."
+            }
         }
     }
-}
 
-#Preview {
-    CalendarView()
-}
+    #Preview {
+        CalendarView()
+            .environmentObject(MedicationStore())
+    }

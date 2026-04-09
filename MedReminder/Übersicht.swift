@@ -7,26 +7,85 @@ final class MedicationStore: ObservableObject {
         var time: Date
         var name: String
         var details: String?
-        var isActive: Bool
-        var isTaken: Bool
+
+        var startDate: Date
+        var endDate: Date?
+        var frequency: String
+        var weekdays: Set<Int>
+
+        var takenDates: Set<Date>
 
         init(
             id: UUID = UUID(),
             time: Date,
             name: String,
             details: String? = nil,
-            isActive: Bool = true,
-            isTaken: Bool = false
+            startDate: Date,
+            endDate: Date? = nil,
+            frequency: String,
+            weekdays: Set<Int> = [],
+            takenDates: Set<Date> = []
         ) {
             self.id = id
             self.time = time
             self.name = name
             self.details = details
-            self.isActive = isActive
-            self.isTaken = isTaken
+            self.startDate = Calendar.current.startOfDay(for: startDate)
+            self.endDate = endDate.map { Calendar.current.startOfDay(for: $0) }
+            self.frequency = frequency
+            self.weekdays = weekdays
+            self.takenDates = takenDates
+        }
+
+        func isScheduled(on date: Date) -> Bool {
+            let calendar = Calendar.current
+            let day = calendar.startOfDay(for: date)
+            let start = calendar.startOfDay(for: startDate)
+
+            if day < start { return false }
+
+            if let endDate {
+                let end = calendar.startOfDay(for: endDate)
+                if day > end { return false }
+            }
+
+            let daysBetween = calendar.dateComponents([.day], from: start, to: day).day ?? 0
+
+            switch frequency {
+            case "daily":
+                return true
+
+            case "every2Days":
+                return daysBetween % 2 == 0
+
+            case "once":
+                return calendar.isDate(day, inSameDayAs: start)
+
+            case "weekdays":
+                let weekday = weekdayIndex(for: day)
+                return weekdays.contains(weekday)
+
+            default:
+                return false
+            }
+        }
+
+        func isTaken(on date: Date) -> Bool {
+            let day = Calendar.current.startOfDay(for: date)
+            return takenDates.contains(day)
+        }
+
+        mutating func markTaken(on date: Date) {
+            let day = Calendar.current.startOfDay(for: date)
+            takenDates.insert(day)
+        }
+
+        private func weekdayIndex(for date: Date) -> Int {
+            let weekday = Calendar.current.component(.weekday, from: date)
+            return (weekday + 5) % 7
         }
     }
-    
+
     @Published var medications: [Medication] = []
 }
 
@@ -51,8 +110,7 @@ struct UebersichtView: View {
                                     time: med.time,
                                     name: med.name,
                                     details: med.details,
-                                    isActive: med.isActive
-                                )
+                                    isActive: med.isScheduled(on: Date())                                )
                             }
                         }
                     }

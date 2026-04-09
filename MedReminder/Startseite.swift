@@ -1,6 +1,11 @@
 import SwiftUI
 
 struct Startseite: View {
+    
+    private var todaysMedications: [MedicationStore.Medication] {
+        medicationStore.medications.filter { $0.isScheduled(on: Date()) }
+    }
+    
     @EnvironmentObject private var medicationStore: MedicationStore
     @State private var navigateToCalendar = false
     @State private var navigateToUebersicht = false
@@ -54,14 +59,16 @@ struct Startseite: View {
                     // Einnahmen ScrollView
                     ScrollView {
                         VStack(spacing: 25) {
-                            if medicationStore.medications.isEmpty {
+                            if todaysMedications.isEmpty {
                                 Text("Noch keine Medikamente eingetragen")
                                     .font(.system(size: 20, weight: .semibold))
                                     .foregroundColor(.gray)
                                     .padding(.top, 40)
                             } else {
-                                ForEach($medicationStore.medications) { $med in
-                                    EinnahmeKarte(med: $med)
+                                ForEach(todaysMedications) { med in
+                                    if let index = medicationStore.medications.firstIndex(where: { $0.id == med.id }) {
+                                        EinnahmeKarte(med: $medicationStore.medications[index])
+                                    }
                                 }
                             }
                         }
@@ -126,6 +133,10 @@ struct Startseite: View {
 struct EinnahmeKarte: View {
     @Binding var med: MedicationStore.Medication
 
+    private var isTakenToday: Bool {
+        med.isTaken(on: Date())
+    }
+
     var body: some View {
         VStack(spacing: 10) {
             HStack {
@@ -153,10 +164,10 @@ struct EinnahmeKarte: View {
 
             Button(action: {
                 withAnimation(.interpolatingSpring(stiffness: 220, damping: 18)) {
-                    med.isTaken = true
+                    med.markTaken(on: Date())
                 }
             }) {
-                Text(med.isTaken ? "eingenommen" : "jetzt einnehmen")
+                Text(isTakenToday ? "eingenommen" : "jetzt einnehmen")
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 60)
@@ -164,14 +175,14 @@ struct EinnahmeKarte: View {
                     .background(Color.orange)
                     .font(.system(size: 25, weight: .bold))
             }
-            .disabled(med.isTaken)
+            .disabled(isTakenToday)
         }
         .background(Color.white)
         .cornerRadius(20)
         .shadow(radius: 4)
-        .scaleEffect(med.isTaken ? 0.98 : 1.0)
-        .opacity(med.isTaken ? 0.5 : 1.0)
-        .animation(.interpolatingSpring(stiffness: 220, damping: 18), value: med.isTaken)
+        .scaleEffect(isTakenToday ? 0.98 : 1.0)
+        .opacity(isTakenToday ? 0.5 : 1.0)
+        .animation(.interpolatingSpring(stiffness: 220, damping: 18), value: isTakenToday)
     }
 }
 
