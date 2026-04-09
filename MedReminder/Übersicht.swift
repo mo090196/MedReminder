@@ -64,8 +64,6 @@ struct UebersichtView: View {
                     .padding(.vertical, 24)
                 }
                 
-                // Unterer Bereich: Tab-Leiste (statisch/mok)
-                BottomTabBar()
             }
             .background(Color(hex: 0xE3FAFF)) // FARBE: Seitenhintergrund (helles Blau) 0xE6F6F8
             .ignoresSafeArea(edges: .top)
@@ -268,3 +266,4 @@ struct ExampleMedications {
     UebersichtView()
         .environmentObject(MedicationStore())
 }
+

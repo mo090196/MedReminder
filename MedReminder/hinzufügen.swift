@@ -249,7 +249,7 @@ struct HinzufügenView: View {
                     
                     // Zweite Hinweis-/Notiz-Zeile im selben Stil
                     HStack(spacing: 8) {
-                        TextField("Hinweis (optional)…", text: $note)
+                        TextField("Hinweis (optional)", text: $note)
                             .textInputAutocapitalization(.sentences)
                             .autocorrectionDisabled(false)
                             .padding(.vertical, 12)
