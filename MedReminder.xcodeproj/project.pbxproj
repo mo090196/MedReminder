@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		B0B892492F1BE8E800A9B6D5 /* MedReminder.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = MedReminder.app; path = "/Users/ta622/Documents/MedReminder/build/Debug-iphoneos/MedReminder.app"; sourceTree = "<absolute>"; };
+		30D3DC712F86D828009059BD /* MedReminder.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MedReminder.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -33,6 +33,7 @@
 			isa = PBXGroup;
 			children = (
 				B0B8924B2F1BE8E800A9B6D5 /* MedReminder */,
+				30D3DC712F86D828009059BD /* MedReminder.app */,
 			);
 			sourceTree = "<group>";
 		};
@@ -58,7 +59,7 @@
 			packageProductDependencies = (
 			);
 			productName = MedReminder;
-			productReference = B0B892492F1BE8E800A9B6D5 /* MedReminder.app */;
+			productReference = 30D3DC712F86D828009059BD /* MedReminder.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */

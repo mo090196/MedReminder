@@ -105,6 +105,7 @@ struct Startseite: View {
                     .ignoresSafeArea(edges: .bottom)
                 }
             }
+            .navigationBarBackButtonHidden(true)
             // NavigationLinks für programmatische Navigation
             .navigationDestination(isPresented: $navigateToHinzufuegen) {
                 HinzufügenView()
