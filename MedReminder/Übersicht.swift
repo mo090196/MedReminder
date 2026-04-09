@@ -42,6 +42,8 @@ struct UebersichtView: View {
                     .padding(.horizontal, 20)
                     .padding(.vertical, 24)
                 }
+                
+                BottomTabBar()
             }
             .background(Color(hex: 0xE3FAFF))
             .ignoresSafeArea(edges: .top)
@@ -145,6 +147,47 @@ private struct MedicationCard: View {
         .accessibilityLabel("Medikament: \(name), Zeit: \(time.formatted(date: .omitted, time: .shortened))")
     }
 }
+
+private struct BottomTabBar: View {
+    var body: some View {
+        HStack(spacing: 32) {
+            TabItem(title: "Übersicht", systemImage: "list.bullet.rectangle")
+            TabItem(title: "Einnahmen", systemImage: "pills")
+            TabItem(title: "Einstellungen", systemImage: "gearshape")
+        }
+        .padding(.horizontal, 24)
+        .padding(.vertical, 12)
+        .background(Color(hex: 0x219EBC))
+        .frame(maxWidth: .infinity, alignment: .bottom)
+        .ignoresSafeArea(edges: .bottom)
+        .clipShape(
+            UnevenRoundedRectangle(
+                topLeadingRadius: 24,
+                topTrailingRadius: 24,
+                style: .continuous
+            )
+        )
+        .shadow(color: .black.opacity(0.06), radius: 10, x: 0, y: -2)
+    }
+}
+
+private struct TabItem: View {
+    var title: String
+    var systemImage: String
+    
+    var body: some View {
+        VStack(spacing: 4) {
+            Image(systemName: systemImage)
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(Color(hex: 0x0B6B7A))
+            Text(title)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(Color(hex: 0x0B6B7A))
+        }
+        .frame(maxWidth: .infinity)
+    }
+}
+
 
 private extension Color {
     init(hex: UInt, alpha: Double = 1.0) {
