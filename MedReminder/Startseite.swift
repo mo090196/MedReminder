@@ -185,17 +185,7 @@ struct Startseite: View {
         }
     }
     
-
-    
-    
-    //  Vorschau
-    struct Startseite_Previews: PreviewProvider {
-        static var previews: some View {
-            Startseite()
-        }
-    }
-    
 #Preview {
     Startseite()
+        .environmentObject(MedicationStore())
 }
-
