@@ -5,6 +5,7 @@ import Foundation
 struct HinzufügenView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var medicationStore: MedicationStore
     @State private var savedMedication: Medication? = nil
     
     //Eingaben
@@ -402,12 +403,14 @@ struct HinzufügenView: View {
     }
     
     private func saveMedication() -> Medication {
+        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+
         let med = Medication(
-            name: name.trimmingCharacters(in: .whitespaces),
+            name: trimmedName,
             note: note.isEmpty ? nil : note,
             startDate: startDate
         )
-        
+
         let comps = Calendar.current.dateComponents([.hour, .minute], from: time)
         let schedule = MedicationSchedule(
             medication: med,
@@ -417,10 +420,26 @@ struct HinzufügenView: View {
             startDate: startDate
         )
         med.schedules.append(schedule)
-        
+
         context.insert(med)
         try? context.save()
-        
+
+        let displayTime = Calendar.current.date(
+            bySettingHour: comps.hour ?? 8,
+            minute: comps.minute ?? 0,
+            second: 0,
+            of: startDate
+        ) ?? time
+
+        let storeMedication = MedicationStore.Medication(
+            time: displayTime,
+            name: trimmedName,
+            details: note.isEmpty ? nil : note,
+            isActive: true
+        )
+
+        medicationStore.medications.append(storeMedication)
+
         return med
     }
 }

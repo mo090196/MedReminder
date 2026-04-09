@@ -1,16 +1,8 @@
-// Übersicht.swift
-// Enthält die Übersicht-Ansicht und UI-Bausteine für die Medikamentenliste.
-// Kommentare teilen den Code in Aufgabenblöcke auf und markieren Farbverwendungen.
-
 import Combine
 import SwiftUI
 
-// MARK: Datenmodell (State & Synchronisation)
-// Verantwortlich für die Speicherung und Synchronisation der Medikationseinträge
-// zwischen Home und Übersicht (per Environment-Object injiziert).
 final class MedicationStore: ObservableObject {
     struct Medication: Identifiable, Equatable {
-        // Einzelner Eintrag (Zeit, Name, optionale Details, Aktiv-Status)
         let id: UUID
         var time: Date
         var name: String
@@ -26,31 +18,19 @@ final class MedicationStore: ObservableObject {
         }
     }
     
-    // Beobachtete Liste aller Medikamente (UI reagiert auf Änderungen)
     @Published var medications: [Medication] = []
 }
-// MARK: - Übersicht View
 
-// MARK: Hauptbildschirm "Übersicht"
-// Layout: Header (Kurven-Hintergrund) + Scroll-Liste mit Karten + untere Tab-Bar
 struct UebersichtView: View {
-    // Zustands- und Datenabhängigkeiten
-    @EnvironmentObject private var injectedStore: MedicationStore
-    @StateObject private var localStore = MedicationStore()
-    
-    // Vereinheitlichte Referenz auf den injizierten Store
-    private var store: MedicationStore { injectedStore }
-    
+    @EnvironmentObject private var store: MedicationStore
     var body: some View {
         Group {
             VStack(spacing: 0) {
-                // Oberer Bereich: Header
                 Header()
                 
-                // Mittlerer Bereich: Scrollbare Liste der Medikamentenkarten
                 ScrollView {
-                    VStack(spacing: 16) { // ABSTAND: Vertikaler Abstand zwischen Karten (wirkt auf Gesamthöhe der Liste, nicht einzelne Kartenhöhe)
-                        ForEach(store.medications.isEmpty ? ExampleMedications.meds : store.medications) { med in                            // Darstellung eines einzelnen Eintrags als Karte
+                    VStack(spacing: 16) {
+                        ForEach(store.medications.isEmpty ? ExampleMedications.meds : store.medications) { med in
                             MedicationCard(
                                 time: med.time,
                                 name: med.name,
@@ -58,36 +38,32 @@ struct UebersichtView: View {
                                 isActive: med.isActive
                             )
                         }
-                        // Platzhalter, falls noch keine Einträge vorhanden sind (Demo-Inhalt)
                     }
                     .padding(.horizontal, 20)
                     .padding(.vertical, 24)
                 }
                 
-                // Unterer Bereich: Tab-Leiste (statisch/mok)
                 BottomTabBar()
             }
-            .background(Color(hex: 0xE3FAFF)) // FARBE: Seitenhintergrund (helles Blau) 0xE6F6F8
+            .background(Color(hex: 0xE3FAFF))
             .ignoresSafeArea(edges: .top)
         }
     }
 }
 
-// MARK: - Header
 private struct Header: View {
     var body: some View {
         ZStack {
-            // Hintergrund mit geschwungener Form
             HeaderBackground()
             
             HStack(spacing: 8) {
                 Image(systemName: "pills.circle")
                     .font(.system(size: 46, weight: .regular))
-                    .foregroundStyle(Color(hex: 0x229EBC)) // FARBE: Icon (Türkis) 0x229EBC
+                    .foregroundStyle(Color(hex: 0x229EBC))
                 Text("Eingetragene\nMedikamente")
                     .multilineTextAlignment(.center)
                     .font(.system(size: 24, weight: .semibold))
-                    .foregroundStyle(Color(hex: 0x219EBC)) // FARBE: Header-Text (dunkles Blaugrün) 0x219EBC
+                    .foregroundStyle(Color(hex: 0x219EBC))
             }
             .padding(.top, 24)
         }
@@ -111,64 +87,58 @@ private struct HeaderBackground: View {
                 path.addLine(to: CGPoint(x: width, y: 0))
                 path.closeSubpath()
             }
-            .fill(Color(hex: 0xA9E5F3)) // FARBE: Header-Hintergrund (helles Blau) 0xA9E5F3
+            .fill(Color(hex: 0xA9E5F3))
         }
     }
 }
 
-// MARK: - Medication Card
 private struct MedicationCard: View {
     var time: Date
     var name: String
     var details: String?
     var isActive: Bool
     
-    // Karte: Zeit (links), Name/Details (mittig), Status/Menu (rechts)
     var body: some View {
-        HStack(alignment: .top, spacing: 12) { // LAYOUT: Horizontales Layout der Karte (beeinflusst Höhe durch Inhalt)
-            // Time
+        HStack(alignment: .top, spacing: 12) {
             VStack(spacing: 8) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(time, style: .time)
                     .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(Color(hex: 0x000000)) // FARBE: Zeit-Text 0x000000
+                    .foregroundStyle(Color(hex: 0x000000))
             }
             
-            // Name & details
             VStack(alignment: .leading, spacing: 2) {
                 Text(name)
                     .font(.system(size: 20, weight: .semibold))
-                    .foregroundStyle(Color(hex: 0x023047)) // FARBE: Name-Text 0x023047
+                    .foregroundStyle(Color(hex: 0x023047))
                 if let details, !details.isEmpty {
                     Text(details)
                         .font(.system(size: 14, weight: .regular))
-                        .foregroundStyle(Color(hex: 0x000000)) // FARBE: Details-Text 0x000000
+                        .foregroundStyle(Color(hex: 0x000000))
                 }
             }
             }
-            .frame(maxWidth: .infinity, alignment: .leading) // BREITE: Mittlere Spalte dehnt sich – bestimmt Kartenbreite im HStack
+            .frame(maxWidth: .infinity, alignment: .leading)
             
-            // Trailing menu/status icon
             VStack(alignment: .trailing) {
                 Image(systemName: isActive ? "timer" : "exclamationmark.circle")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(isActive ? Color(hex: 0x0B6B7A) : Color.red) // FARBE: Status-Icon aktiv 0x0B6B7A / inaktiv rot
+                    .foregroundStyle(isActive ? Color(hex: 0x0B6B7A) : Color.red)
                 Spacer(minLength: 0)
             }
         }
-        .padding(16) // GRÖSSE: Innenabstand der Karte (erhöht effektive Höhe)
+        .padding(16)
         .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous) // FORM: Eckenradius, keine feste Höhe/Breite
-                .fill(.white) // FARBE: Karten-Hintergrund weiß
-                .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 4) // FARBE: Schatten schwarz 8%
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(.white)
+                .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 4)
         )
-        // GRÖSSE: Keine feste Höhe gesetzt – passt sich Inhalt + Padding an
         .overlay(
             HStack(spacing: 12) {
                 Spacer()
                 Image(systemName: "ellipsis")
                     .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(Color(hex: 0x7A8A90)) // FARBE: Ellipsis-Icon (Grau-Blau) 0x7A8A90
+                    .foregroundStyle(Color(hex: 0x7A8A90))
             }
             .padding(.trailing, 12)
             .padding(.top, 8), alignment: .top
@@ -178,8 +148,6 @@ private struct MedicationCard: View {
     }
 }
 
-// MARK: - Bottom Tab Bar (mock to match screenshot)
-// Statische/visuelle Tab-Leiste (ohne Navigation)
 private struct BottomTabBar: View {
     var body: some View {
         HStack(spacing: 32) {
@@ -189,25 +157,20 @@ private struct BottomTabBar: View {
         }
         .padding(.horizontal, 24)
         .padding(.vertical, 12)
-        .background(Color(hex: 0x219EBC)) // FARBE: Tab-Bar Hintergrund dunkelTürkis
-        .frame(maxWidth: .infinity, alignment: .bottom) // volle Breite
-        .ignoresSafeArea(edges: .bottom)                // bis zum unteren Bildschirmrand
+        .background(Color(hex: 0x219EBC))
+        .frame(maxWidth: .infinity, alignment: .bottom)
+        .ignoresSafeArea(edges: .bottom)
         .clipShape(
             UnevenRoundedRectangle(
                 topLeadingRadius: 24,
                 topTrailingRadius: 24,
-                //bottomLeadingRadius: 0,
-                //bottomTrailingRadius: 0,
                 style: .continuous
             )
         )
-        .shadow(color: .black.opacity(0.06), radius: 10, x: 0, y: -2) // FARBE: Schatten schwarz 6%
-        //.padding(.horizontal, 16)
-        //.padding(.bottom, 8)
+        .shadow(color: .black.opacity(0.06), radius: 10, x: 0, y: -2)
     }
 }
 
-// Einzelner Tab-Eintrag (Icon + Titel)
 private struct TabItem: View {
     var title: String
     var systemImage: String
@@ -216,17 +179,16 @@ private struct TabItem: View {
         VStack(spacing: 4) {
             Image(systemName: systemImage)
                 .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(Color(hex: 0x0B6B7A)) // FARBE: Tab-Icon 0x0B6B7A
+                .foregroundStyle(Color(hex: 0x0B6B7A))
             Text(title)
                 .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(Color(hex: 0x0B6B7A)) // FARBE: Tab-Titel 0x0B6B7A
+                .foregroundStyle(Color(hex: 0x0B6B7A))
         }
-        .frame(maxWidth: .infinity) // BREITE: füllt verfügbare Breite (nicht relevant für Karten)
+        .frame(maxWidth: .infinity)
     }
 }
 
-// MARK: Farb-Helfer
-// Erlaubt das Erstellen von SwiftUI Color aus hexadezimalen RGB-Werten.
+
 private extension Color {
     init(hex: UInt, alpha: Double = 1.0) {
         let r = Double((hex >> 16) & 0xFF) / 255.0
@@ -263,7 +225,6 @@ struct ExampleMedications {
 }
 
 
-// Vorschau mit Beispiel-Daten
 #Preview {
     UebersichtView()
         .environmentObject(MedicationStore())
