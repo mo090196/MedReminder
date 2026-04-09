@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct Startseite: View {
+    @EnvironmentObject private var medicationStore: MedicationStore
     @State private var navigateToHinzufuegen = false
     @State private var navigateToCalendar = false
     @State private var navigateToUebersicht = false
@@ -55,9 +56,19 @@ struct Startseite: View {
                     // Einnahmen ScrollView
                     ScrollView {
                         VStack(spacing: 25) {
-                            EinnahmeKarte(name: "Ibuprofen", zeit: "13:30")
-                            EinnahmeKarte(name: "Vitamine", zeit: "16:30")
-                            EinnahmeKarte(name: "Insulin", zeit: "19:30")
+                            if medicationStore.medications.isEmpty {
+                                Text("Noch keine Medikamente eingetragen")
+                                    .font(.system(size: 20, weight: .semibold))
+                                    .foregroundColor(.gray)
+                                    .padding(.top, 40)
+                            } else {
+                                ForEach(medicationStore.medications) { med in
+                                    EinnahmeKarte(
+                                        name: med.name,
+                                        zeit: med.time.formatted(date: .omitted, time: .shortened)
+                                    )
+                                }
+                            }
                         }
                         .padding(15)
                     }
@@ -114,7 +125,7 @@ struct Startseite: View {
                 CalendarView()
             }
             .navigationDestination(isPresented: $navigateToUebersicht) {
-                UebersichtView().environmentObject(MedicationStore())
+                UebersichtView()
             }
             }
         }
