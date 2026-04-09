@@ -403,6 +403,11 @@ struct HinzufügenView: View {
             .padding(.top, 8)
             .background(.clear)
         }
+        .onAppear {
+            if savedMedication == nil {
+                resetForm()
+            }
+        }
     }
     
     private func saveMedication() -> Medication {
@@ -438,12 +443,32 @@ struct HinzufügenView: View {
             time: displayTime,
             name: trimmedName,
             details: note.isEmpty ? nil : note,
-            isActive: true
+            isActive: true,
+            isTaken: false
         )
 
         medicationStore.medications.append(storeMedication)
 
         return med
+    }
+    
+    private func resetForm() {
+        name = ""
+        note = ""
+        startDate = .now
+        endDate = nil
+        time = .now
+        frequency = ""
+        selectedWeekdays.removeAll()
+
+        nameEdited = false
+        startDateEdited = false
+        timeEdited = false
+        frequencyEdited = false
+
+        showSummary = false
+        lastSummary = nil
+        savedMedication = nil
     }
 }
 
