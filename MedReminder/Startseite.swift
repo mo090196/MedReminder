@@ -1,7 +1,12 @@
 import SwiftUI
 
 struct Startseite: View {
-    @State private var navigateToHinzufuegen = false
+    
+    private var todaysMedications: [MedicationStore.Medication] {
+        medicationStore.medications.filter { $0.isScheduled(on: Date()) }
+    }
+    
+    @EnvironmentObject private var medicationStore: MedicationStore
     @State private var navigateToCalendar = false
     @State private var navigateToUebersicht = false
 
@@ -33,8 +38,7 @@ struct Startseite: View {
 
                         Spacer()
 
-                        // Orange Plus-Button → HinzufügenView
-                        Button(action: { navigateToHinzufuegen = true }) {
+                        NavigationLink(destination: HinzufügenView()) {
                             ZStack {
                                 Image(systemName: "circle.fill")
                                     .foregroundColor(.orange)
@@ -55,9 +59,18 @@ struct Startseite: View {
                     // Einnahmen ScrollView
                     ScrollView {
                         VStack(spacing: 25) {
-                            EinnahmeKarte(name: "Ibuprofen", zeit: "13:30")
-                            EinnahmeKarte(name: "Vitamine", zeit: "16:30")
-                            EinnahmeKarte(name: "Insulin", zeit: "19:30")
+                            if todaysMedications.isEmpty {
+                                Text("Noch keine Medikamente eingetragen")
+                                    .font(.system(size: 20, weight: .semibold))
+                                    .foregroundColor(.gray)
+                                    .padding(.top, 40)
+                            } else {
+                                ForEach(todaysMedications) { med in
+                                    if let index = medicationStore.medications.firstIndex(where: { $0.id == med.id }) {
+                                        EinnahmeKarte(med: $medicationStore.medications[index])
+                                    }
+                                }
+                            }
                         }
                         .padding(15)
                     }
@@ -105,78 +118,75 @@ struct Startseite: View {
                     .ignoresSafeArea(edges: .bottom)
                 }
             }
-            // NavigationLinks für programmatische Navigation
-            .navigationDestination(isPresented: $navigateToHinzufuegen) {
-                HinzufügenView()
-            }
+            .navigationBarBackButtonHidden(true)
+
             .navigationDestination(isPresented: $navigateToCalendar) {
                 CalendarView()
             }
             .navigationDestination(isPresented: $navigateToUebersicht) {
-                UebersichtView().environmentObject(MedicationStore())
+                UebersichtView()
             }
             }
         }
     }
-    //  Einnahme-Karte
-    struct EinnahmeKarte: View {
-        let name: String
-        let zeit: String
-        
-        var body: some View {
-            VStack(spacing: 10) {
-                HStack {
-                    Text(name)
-                        .font(.system(size: 25, weight: .semibold))
-                    
-                    Spacer()
-                    
-                    HStack(spacing: 8)
-                    { ZStack
-                        { Image(systemName: "circle.fill")
-                                .foregroundColor(.black)
-                                .font(.system(size: 22))
-                            
-                            Image(systemName: "clock")
-                                .foregroundColor(.white)
-                                .font(.system(size: 18, weight: .semibold))
-                        }
-                        
-                        Text(zeit)
-                            .font(.system(size: 20, weight: .semibold))
-                    }
-                }
-                .padding(25)
-                
-                Button(action: {
-                    print("\(name) eingenommen")
-                }) {
-                    Text("jetzt einnehmen")
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 60)
-                        .padding(.horizontal)
-                        .background(Color.orange)
-                        .font(.system(size: 25, weight: .bold))
-                }
-            }
-            .background(Color.white)
-            .cornerRadius(20)
-            .shadow(radius: 4)
-        }
-    }
-    
 
-    
-    
-    //  Vorschau
-    struct Startseite_Previews: PreviewProvider {
-        static var previews: some View {
-            Startseite()
-        }
+struct EinnahmeKarte: View {
+    @Binding var med: MedicationStore.Medication
+
+    private var isTakenToday: Bool {
+        med.isTaken(on: Date())
     }
-    
-#Preview {
-    Startseite()
+
+    var body: some View {
+        VStack(spacing: 10) {
+            HStack {
+                Text(med.name)
+                    .font(.system(size: 25, weight: .semibold))
+
+                Spacer()
+
+                HStack(spacing: 8) {
+                    ZStack {
+                        Image(systemName: "circle.fill")
+                            .foregroundColor(.black)
+                            .font(.system(size: 22))
+
+                        Image(systemName: "clock")
+                            .foregroundColor(.white)
+                            .font(.system(size: 18, weight: .semibold))
+                    }
+
+                    Text(med.time.formatted(date: .omitted, time: .shortened))
+                        .font(.system(size: 20, weight: .semibold))
+                }
+            }
+            .padding(25)
+
+            Button(action: {
+                withAnimation(.interpolatingSpring(stiffness: 220, damping: 18)) {
+                    med.markTaken(on: Date())
+                }
+            }) {
+                Text(isTakenToday ? "eingenommen" : "jetzt einnehmen")
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 60)
+                    .padding(.horizontal)
+                    .background(Color.orange)
+                    .font(.system(size: 25, weight: .bold))
+            }
+            .disabled(isTakenToday)
+        }
+        .background(Color.white)
+        .cornerRadius(20)
+        .shadow(radius: 4)
+        .scaleEffect(isTakenToday ? 0.98 : 1.0)
+        .opacity(isTakenToday ? 0.5 : 1.0)
+        .animation(.interpolatingSpring(stiffness: 220, damping: 18), value: isTakenToday)
+    }
 }
 
+#Preview {
+    Startseite()
+        .environmentObject(MedicationStore())
+}

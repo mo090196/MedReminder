@@ -1,26 +1,10 @@
-//  CalendarView.swift
-//  MedReminder
-//
-//  Created by Assistant on 18.01.26.
-//
-
 import SwiftUI
 
 struct CalendarView: View {
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var medicationStore: MedicationStore
     @State private var selectedDate: Date = .now
-
-    // Simple demo data: map of day (startOfDay) -> taken(true)/missed(false)
-    // In your app, replace this with real persistence from the home confirmation button.
-    @State private var intakeStatus: [Date: Bool] = [:]
-
-    // For popup
     @State private var showingDetail: IntakeDetailItem? = nil
-
-    // Bottom navigation state
-    @State private var navigateToUebersicht: Bool = false
-    @State private var navigateToCalendar: Bool = false
-    @State private var navigateToHinzufuegen: Bool = false
 
     var body: some View {
         NavigationStack {
@@ -60,7 +44,7 @@ struct CalendarView: View {
                             .foregroundStyle(.white.opacity(0.9))
 
                         // Calendar grid
-                        CalendarMonthGrid(monthFor: selectedDate, intakeStatus: intakeStatus, onTapDay: { date in
+                        CalendarMonthGrid(monthFor: selectedDate, onTapDay: { date in
                             showingDetail = IntakeDetailItem(date: date)
                         })
                     }
@@ -102,51 +86,6 @@ struct CalendarView: View {
                     Spacer(minLength: 0)
                 }
                 .padding(.horizontal)
-
-                // Navigation unten
-                VStack { Spacer() }
-                    .overlay(
-                        HStack {
-                            Button(action: { navigateToUebersicht = true }) {
-                                VStack(spacing: 4) {
-                                    Image(systemName:"list.bullet.rectangle")
-                                        .font(.system(size: 55))
-                                    Text("Übersicht")
-                                        .font(.system(size: 22, weight: .bold))
-                                }
-                            }
-                            .foregroundColor(.white.opacity(0.7))
-
-                            Spacer()
-
-                            VStack {
-                                Image(systemName: "house.fill")
-                                    .font(.system(size: 60, weight: .bold))
-                                Text("Startseite")
-                                    .font(.system(size: 22, weight: .bold))
-                            }
-                            .foregroundColor(.white)
-
-                            Spacer()
-
-                            // Calendar button → navigates to CalendarView
-                            Button(action: { navigateToCalendar = true }) {
-                                VStack(spacing: 4) {
-                                    Image(systemName: "calendar")
-                                        .font(.system(size: 55))
-                                    Text("Kalender")
-                                        .font(.system(size: 22, weight: .bold))
-                                }
-                            }
-                            .foregroundColor(.white.opacity(0.7))
-                        }
-                        .padding()
-                        .background(Color(red: 35/255, green: 150/255, blue: 185/255))
-                        .clipShape(UnevenRoundedRectangle(topLeadingRadius: 30, topTrailingRadius: 30))
-                        .offset(y: 35)
-                        .ignoresSafeArea(edges: .bottom)
-                        , alignment: .bottom
-                    )
             }
             .navigationTitle("Kalender")
             .navigationBarTitleDisplayMode(.inline)
@@ -159,33 +98,22 @@ struct CalendarView: View {
                     }
                 }
             }
-            .onAppear(perform: preloadDemoData)
-            .sheet(item: $showingDetail, content: { item in
-                IntakeDetailSheet(date: item.date, status: statusFor(item.date))
-                    .presentationDetents([.fraction(0.3), .medium])
-            })
-            .navigationDestination(isPresented: $navigateToHinzufuegen) {
-                HinzufügenView()
-            }
-            .navigationDestination(isPresented: $navigateToCalendar) {
-                CalendarView()
-            }
-            .navigationDestination(isPresented: $navigateToUebersicht) {
-                UebersichtView().environmentObject(MedicationStore())
+            .sheet(item: $showingDetail) { item in
+                IntakeDetailSheet(
+                    date: item.date,
+                    medications: medicationStore.medications
+                )
+                .presentationDetents([.fraction(0.3), .medium])
             }
         }
     }
 
-    
-    
     private func formattedSelectedDateTitle(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "de_DE")
-        formatter.setLocalizedDateFormatFromTemplate("EEE, MMM d") // z. B. So, Jan 17
+        formatter.setLocalizedDateFormatFromTemplate("EEE, MMM d")
         return formatter.string(from: date)
     }
-
-    // MARK: - Helpers
 
     private let calendar: Calendar = {
         var cal = Calendar(identifier: .gregorian)
@@ -196,28 +124,7 @@ struct CalendarView: View {
     private func startOfDay(_ date: Date) -> Date {
         calendar.startOfDay(for: date)
     }
-
-    private func statusFor(_ date: Date) -> Bool? {
-        intakeStatus[startOfDay(date)]
-    }
-
-    private func preloadDemoData() {
-        // Generate some demo statuses for current month
-        let comps = calendar.dateComponents([.year, .month], from: selectedDate)
-        guard let monthStart = calendar.date(from: comps),
-              let range = calendar.range(of: .day, in: .month, for: monthStart) else { return }
-        var dict: [Date: Bool] = [:]
-        for day in range {
-            if let date = calendar.date(byAdding: .day, value: day - 1, to: monthStart) {
-                // Demo rule: even days taken (green), odd days missed (red)
-                dict[startOfDay(date)] = (day % 2 == 0)
-            }
-        }
-        intakeStatus = dict
-    }
 }
-
-// MARK: - Subviews
 
 private struct MonthHeader: View {
     let date: Date
@@ -273,7 +180,6 @@ private struct WeekdayHeader: View {
 
 private struct CalendarMonthGrid: View {
     let monthFor: Date
-    let intakeStatus: [Date: Bool]
     let onTapDay: (Date) -> Void
 
     private var calendar: Calendar {
@@ -286,7 +192,7 @@ private struct CalendarMonthGrid: View {
         let comps = calendar.dateComponents([.year, .month], from: monthFor)
         let monthStart = calendar.date(from: comps) ?? monthFor
         let daysRange = calendar.range(of: .day, in: .month, for: monthStart) ?? 1..<31
-        let firstWeekday = calendar.component(.weekday, from: monthStart) // 1..7
+        let firstWeekday = calendar.component(.weekday, from: monthStart)
         let leadingEmpty = (firstWeekday - calendar.firstWeekday + 7) % 7
 
         let totalCells = leadingEmpty + daysRange.count
@@ -302,7 +208,7 @@ private struct CalendarMonthGrid: View {
                         } else {
                             let day = index - leadingEmpty + 1
                             let date = calendar.date(byAdding: .day, value: day - 1, to: monthStart) ?? monthStart
-                            DayCell(date: date, isInMonth: true, status: statusFor(date)) {
+                            DayCell(date: date) {
                                 onTapDay(date)
                             }
                         }
@@ -311,37 +217,20 @@ private struct CalendarMonthGrid: View {
             }
         }
     }
-
-    private func startOfDay(_ date: Date) -> Date { calendar.startOfDay(for: date) }
-
-    private func statusFor(_ date: Date) -> Bool? {
-        intakeStatus[startOfDay(date)]
-    }
 }
 
 private struct DayCell: View {
     let date: Date
-    let isInMonth: Bool
-    let status: Bool? // true = taken(green), false = missed(red), nil = no data
     let tap: () -> Void
 
     var body: some View {
         Button(action: tap) {
-            VStack(spacing: 4) {
-                Text("\(dayNumber(date))")
-                    .font(.body)
-                    .foregroundStyle(.primary)
-                    .frame(maxWidth: .infinity)
-
-                // Small circle marker below the number
-                Circle()
-                    .fill(colorForStatus(status))
-                    .frame(width: 8, height: 8)
-                    .opacity(status == nil ? 0 : 1)
-            }
-            .padding(.vertical, 8)
-            .frame(maxWidth: .infinity)
-            .contentShape(Rectangle())
+            Text("\(dayNumber(date))")
+                .font(.body)
+                .foregroundStyle(.primary)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }
@@ -350,18 +239,12 @@ private struct DayCell: View {
         let d = Calendar.current.component(.day, from: date)
         return String(d)
     }
-
-    private func colorForStatus(_ status: Bool?) -> Color {
-        guard let status = status else { return .clear }
-        return status ? .green : .red
-    }
 }
 
 private struct IntakeDetailItem: Identifiable, Equatable {
     let id: Date
     let date: Date
     init(date: Date) {
-        // Use startOfDay to ensure stable identity for the same calendar day
         let day = Calendar.current.startOfDay(for: date)
         self.id = day
         self.date = day
@@ -371,17 +254,36 @@ private struct IntakeDetailItem: Identifiable, Equatable {
 private struct IntakeDetailSheet: View, Identifiable {
     let id = UUID()
     let date: Date
-    let status: Bool?
+    let medications: [MedicationStore.Medication]
+
+    private var scheduledMedications: [MedicationStore.Medication] {
+        medications.filter { $0.isScheduled(on: date) }
+    }
 
     var body: some View {
         VStack(spacing: 12) {
-            Capsule().fill(Color.secondary.opacity(0.3)).frame(width: 40, height: 5).padding(.top, 8)
+            Capsule()
+                .fill(Color.secondary.opacity(0.3))
+                .frame(width: 40, height: 5)
+                .padding(.top, 8)
+
             Text(title)
                 .font(.headline)
-            Text(message)
-                .font(.body)
-                .multilineTextAlignment(.center)
-                .foregroundStyle(.secondary)
+
+            if scheduledMedications.isEmpty {
+                Text("Für diesen Tag sind keine Medikamente eingeplant.")
+                    .font(.body)
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(.secondary)
+            } else {
+                ForEach(scheduledMedications) { med in
+                    Text(message(for: med))
+                        .font(.body)
+                        .multilineTextAlignment(.center)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
             Spacer()
         }
         .padding()
@@ -394,19 +296,17 @@ private struct IntakeDetailSheet: View, Identifiable {
         return f.string(from: date)
     }
 
-    private var message: String {
-        switch status {
-        case .some(true):
-            return "Die Einnahme wurde an diesem Tag bestätigt (grün)."
-        case .some(false):
-            return "Die Einnahme wurde an diesem Tag nicht durchgeführt (rot)."
-        case .none:
-            return "Keine Daten zur Einnahme für diesen Tag vorhanden."
+    private func message(for med: MedicationStore.Medication) -> String {
+        if med.isTaken(on: date) {
+            return "\(med.name) wurde an diesem Tag eingenommen."
+        } else {
+            return "\(med.name) wurde an diesem Tag nicht eingenommen."
         }
     }
 }
 
 #Preview {
     CalendarView()
+        .environmentObject(MedicationStore())
 }
 
