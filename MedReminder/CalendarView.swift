@@ -17,89 +17,167 @@ struct CalendarView: View {
     // For popup
     @State private var showingDetail: IntakeDetailItem? = nil
 
+    // Bottom navigation state
+    @State private var navigateToUebersicht: Bool = false
+    @State private var navigateToCalendar: Bool = false
+    @State private var navigateToHinzufuegen: Bool = false
+
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                header
-                content
+            ZStack {
+                Color(.systemGroupedBackground).ignoresSafeArea()
+
+                // Blue rounded container
+                VStack {
+                    // Container content
+                    VStack(alignment: .leading, spacing: 12) {
+                        // Top-left calendar icon
+                        Image(systemName: "calendar")
+                            .imageScale(.large)
+                            .foregroundStyle(.white)
+
+                        // Subtitle "Datum wählen"
+                        Text("Datum wählen")
+                            .font(.subheadline)
+                            .foregroundStyle(.white.opacity(0.9))
+
+                        // Large date label
+                        Text(formattedSelectedDateTitle(selectedDate))
+                            .font(.system(size: 34, weight: .bold))
+                            .foregroundStyle(.white)
+
+                        // Month navigation
+                        MonthHeader(date: selectedDate) { direction in
+                            withAnimation(.easeInOut) {
+                                selectedDate = calendar.date(byAdding: .month, value: direction, to: selectedDate) ?? selectedDate
+                            }
+                        }
+                        .tint(.white)
+
+                        // Weekday header
+                        WeekdayHeader()
+                            .tint(.white)
+                            .foregroundStyle(.white.opacity(0.9))
+
+                        // Calendar grid
+                        CalendarMonthGrid(monthFor: selectedDate, intakeStatus: intakeStatus, onTapDay: { date in
+                            showingDetail = IntakeDetailItem(date: date)
+                        })
+                    }
+                    .padding(20)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(Color(.systemBlue))
+                    )
+
+                    // Bottom action row inside the blue container visual context
+                    .overlay(
+                        HStack {
+                            Button(role: .cancel) {
+                                dismiss()
+                            } label: {
+                                Text("Abbrechen")
+                                    .font(.body)
+                                    .foregroundStyle(.white)
+                            }
+                            .buttonStyle(.plain)
+
+                            Spacer()
+
+                            Button {
+                                // Platzhalter: hier könnte man z. B. ein Detail öffnen
+                            } label: {
+                                Text("Fertig")
+                                    .font(.body).bold()
+                                    .foregroundStyle(.white)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 14)
+                        , alignment: .bottom
+                    )
+
+                    Spacer(minLength: 0)
+                }
+                .padding(.horizontal)
+
+                // Navigation unten
+                VStack { Spacer() }
+                    .overlay(
+                        HStack {
+                            Button(action: { navigateToUebersicht = true }) {
+                                VStack(spacing: 4) {
+                                    Image(systemName:"list.bullet.rectangle")
+                                        .font(.system(size: 55))
+                                    Text("Übersicht")
+                                        .font(.system(size: 22, weight: .bold))
+                                }
+                            }
+                            .foregroundColor(.white.opacity(0.7))
+
+                            Spacer()
+
+                            VStack {
+                                Image(systemName: "house.fill")
+                                    .font(.system(size: 60, weight: .bold))
+                                Text("Startseite")
+                                    .font(.system(size: 22, weight: .bold))
+                            }
+                            .foregroundColor(.white)
+
+                            Spacer()
+
+                            // Calendar button → navigates to CalendarView
+                            Button(action: { navigateToCalendar = true }) {
+                                VStack(spacing: 4) {
+                                    Image(systemName: "calendar")
+                                        .font(.system(size: 55))
+                                    Text("Kalender")
+                                        .font(.system(size: 22, weight: .bold))
+                                }
+                            }
+                            .foregroundColor(.white.opacity(0.7))
+                        }
+                        .padding()
+                        .background(Color(red: 35/255, green: 150/255, blue: 185/255))
+                        .clipShape(UnevenRoundedRectangle(topLeadingRadius: 30, topTrailingRadius: 30))
+                        .offset(y: 35)
+                        .ignoresSafeArea(edges: .bottom)
+                        , alignment: .bottom
+                    )
             }
             .navigationTitle("Kalender")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        // Einstellungen-Action (Platzhalter)
+                    } label: {
+                        Image(systemName: "gearshape")
+                    }
+                }
+            }
             .onAppear(perform: preloadDemoData)
             .sheet(item: $showingDetail, content: { item in
                 IntakeDetailSheet(date: item.date, status: statusFor(item.date))
                     .presentationDetents([.fraction(0.3), .medium])
             })
+            .navigationDestination(isPresented: $navigateToHinzufuegen) {
+                HinzufügenView()
+            }
+            .navigationDestination(isPresented: $navigateToCalendar) {
+                CalendarView()
+            }
+            .navigationDestination(isPresented: $navigateToUebersicht) {
+                UebersichtView().environmentObject(MedicationStore())
+            }
         }
     }
 
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 8) {
-                Image(systemName: "calendar")
-                    .imageScale(.large)
-                Text("Kalender")
-                    .font(.title2).bold()
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal)
-            .padding(.top, 12)
-
-            // Datumstitel analog Mockup (z. B. So, Jan 17)
-            Text(formattedSelectedDateTitle(selectedDate))
-                .font(.headline)
-                .foregroundStyle(.secondary)
-                .padding(.horizontal)
-                .padding(.bottom, 8)
-        }
-        .background(
-            LinearGradient(colors: [Color(.systemTeal).opacity(0.15), .clear], startPoint: .top, endPoint: .bottom)
-        )
-    }
-
-    private var content: some View {
-        VStack(spacing: 16) {
-            MonthHeader(date: selectedDate) { direction in
-                withAnimation(.easeInOut) {
-                    selectedDate = calendar.date(byAdding: .month, value: direction, to: selectedDate) ?? selectedDate
-                }
-            }
-            .padding(.horizontal)
-
-            WeekdayHeader()
-                .padding(.horizontal)
-
-            CalendarMonthGrid(monthFor: selectedDate, intakeStatus: intakeStatus, onTapDay: { date in
-                showingDetail = IntakeDetailItem(date: date)
-            })
-            .padding(.horizontal)
-
-            // Primäre Aktionen analog "Abbrechen" im Mockup
-            HStack(spacing: 12) {
-                Button(role: .cancel) {
-                    dismiss()
-                } label: {
-                    Text("Abbrechen")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
-
-                Button {
-                    // Platzhalter: hier könnte man z. B. ein Detail öffnen
-                } label: {
-                    Text("Fertig")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(Color(.systemTeal))
-            }
-            .padding(.horizontal)
-            .padding(.bottom)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .background(Color(.systemGroupedBackground))
-    }
-
+    
+    
     private func formattedSelectedDateTitle(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "de_DE")
@@ -331,3 +409,4 @@ private struct IntakeDetailSheet: View, Identifiable {
 #Preview {
     CalendarView()
 }
+
