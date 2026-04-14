@@ -6,9 +6,17 @@ struct Startseite: View {
         medicationStore.medications.filter { $0.isScheduled(on: Date()) }
     }
     
+    private var formattedDate: String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "de_DE")
+        formatter.dateFormat = "EEEE, d. MMMM"
+        return formatter.string(from: Date()).capitalized
+    }
+    
     @EnvironmentObject private var medicationStore: MedicationStore
     @State private var navigateToCalendar = false
     @State private var navigateToUebersicht = false
+    @State private var showHinzufuegen = false
 
     var body: some View {
         NavigationStack {
@@ -19,36 +27,39 @@ struct Startseite: View {
                 Circle()
                        .fill(Color(red: 33/255, green: 158/255, blue: 188/255))
                        .frame(width: 1000, height: 1000)
-                       .offset(x: -300, y: -845),
+                       .offset(x: -300, y: -830),
                 alignment: .topLeading
                 )
 
                 VStack(spacing: 20) {
                     // Kopfbereich
-                    HStack(alignment: .center) {
+                    HStack(alignment: .top) {
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Heute")
                                 .font(.system(size: 50, weight: .bold))
                                 .foregroundColor(.white)
                             
-                            Text("Montag, Dezember 8")
-                                .font(.system(size: 30, weight: .semibold))
-                                .foregroundColor(.black)
+                            Text(formattedDate)                                .font(.system(size: 30, weight: .semibold))
+                                .foregroundColor(.white)
                         }
 
                         Spacer()
 
-                        NavigationLink(destination: HinzufügenView()) {
+                        Button {
+                            showHinzufuegen = true
+                        } label: {
                             ZStack {
                                 Image(systemName: "circle.fill")
                                     .foregroundColor(.orange)
-                                    .font(.system(size:60))
+                                    .font(.system(size: 55))
+
                                 Image(systemName: "circle")
                                     .foregroundColor(.white)
-                                    .font(.system(size: 45))
+                                    .font(.system(size: 48))
+
                                 Image(systemName: "plus")
                                     .foregroundColor(.white)
-                                    .font(.system(size: 30))
+                                    .font(.system(size: 25))
                                     .fontWeight(.bold)
                             }
                         }
@@ -60,8 +71,8 @@ struct Startseite: View {
                     ScrollView {
                         VStack(spacing: 25) {
                             if todaysMedications.isEmpty {
-                                Text("Noch keine Medikamente eingetragen")
-                                    .font(.system(size: 20, weight: .semibold))
+                                Text("Für heute keine Medikamente eingetragen")
+                                    .font(.system(size: 30, weight: .semibold))
                                     .foregroundColor(.gray)
                                     .padding(.top, 40)
                             } else {
@@ -77,41 +88,44 @@ struct Startseite: View {
                     
 
                     // Navigation unten
-                    HStack {
+                    HStack(spacing: 0) {
+                        // Übersicht
                         Button(action: { navigateToUebersicht = true }) {
                             VStack(spacing: 4) {
                                 Image(systemName:"list.bullet.rectangle")
-                                        .font(.system(size: 55))
+                                        .font(.system(size: 38))
                                 Text("Übersicht")
-                                        .font(.system(size: 22, weight: .bold))
-                                                  }
-                                              }
-                                        .foregroundColor(.white.opacity(0.7))
-                                              
-                        Spacer()
-                        VStack{
-                            Image(systemName: "house.fill")
-                                .font(.system(size: 60, weight: .bold))
-                            Text("Startseite")
-                                .font(.system(size: 22, weight: .bold))
+                                        .font(.system(size: 18, weight: .bold))
+                            }
+                            .frame(maxWidth: .infinity)
                         }
+                        .foregroundColor(.white.opacity(0.7))
+
+                        // Startseite
+                        VStack(spacing: 4) {
+                            Image(systemName: "house.fill")
+                                .font(.system(size: 38, weight: .bold))
+                            Text("Startseite")
+                                .font(.system(size: 18, weight: .bold))
+                        }
+                        .frame(maxWidth: .infinity)
                         .foregroundColor(.white)
 
-                        
-                        Spacer()
-                        
-                        // Calendar button → navigates to CalendarView
+                        // Kalender
                         Button(action: { navigateToCalendar = true }) {
                             VStack(spacing: 4) {
                                 Image(systemName: "calendar")
-                                    .font(.system(size: 55))
+                                    .font(.system(size: 40))
                                 Text("Kalender")
-                                    .font(.system(size: 22, weight: .bold))
+                                    .font(.system(size: 18, weight: .bold))
                             }
+                            .frame(maxWidth: .infinity)
                         }
                         .foregroundColor(.white.opacity(0.7))
                     }
-                    .padding()
+                    .padding(.top,7)
+                    .padding(.all)
+                    .padding(.bottom, 10)
                     .background(Color(red: 35/255, green: 150/255, blue: 185/255))
                     .clipShape(UnevenRoundedRectangle(topLeadingRadius: 30, topTrailingRadius: 30))
                     .offset(y: 35)
@@ -119,16 +133,21 @@ struct Startseite: View {
                 }
             }
             .navigationBarBackButtonHidden(true)
-
             .navigationDestination(isPresented: $navigateToCalendar) {
                 CalendarView()
             }
             .navigationDestination(isPresented: $navigateToUebersicht) {
                 UebersichtView()
             }
+            .fullScreenCover(isPresented: $showHinzufuegen) {
+                NavigationStack {
+                    HinzufügenView()
+                        .environmentObject(medicationStore)
+                }
             }
         }
     }
+}
 
 struct EinnahmeKarte: View {
     @Binding var med: MedicationStore.Medication

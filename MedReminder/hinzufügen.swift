@@ -4,10 +4,9 @@ import Foundation
 
 struct HinzufügenView: View {
     @Environment(\.modelContext) private var context
-    @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var medicationStore: MedicationStore
+    @Environment(\.dismiss) private var dismiss
     @State private var savedMedication: Medication? = nil
-    
     //Eingaben
     @State private var name: String = ""
     @State private var note: String = ""
@@ -23,14 +22,9 @@ struct HinzufügenView: View {
     @State private var timeEdited: Bool = false
     @State private var frequencyEdited: Bool = false
     
-    @State private var showSummary = false
-    @State private var lastSummary: MedicationSummary? = nil
-    
     @State private var showingFrequencySheet = false
     @State private var showingStartDateSheet = false
     @State private var showingEndDateSheet = false
-    @State private var goHome = false
-    
     @State private var showTimePicker = false
     
     struct MedicationSummary: Identifiable {
@@ -38,12 +32,12 @@ struct HinzufügenView: View {
         let name: String
         let note: String?
         let startDate: Date
+        let endDate: Date?
         let time: Date
         let frequency: String
         let weekdays: Set<Int>
     }
     
-    // Formatter und Hilfsfunktionen für diese View
     private var dateFormatter: DateFormatter {
         let f = DateFormatter()
         f.locale = Locale(identifier: "de_DE")
@@ -89,7 +83,6 @@ struct HinzufügenView: View {
 
             ScrollView {
                 VStack(spacing: 16) {
-                    NavigationLink(destination: Startseite(), isActive: $goHome) { EmptyView() }
 
                     ZStack {
                         RoundedRectangle(cornerRadius: 20, style: .continuous)
@@ -310,6 +303,23 @@ struct HinzufügenView: View {
         .environment(\.locale, Locale(identifier: "de_DE"))
         .navigationTitle("Neues Medikament")
         .toolbarTitleDisplayMode(.automatic)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    dismiss()
+                } label: {
+                    Circle()
+                        .fill(Color.white)
+                        .frame(width: 30, height: 60)
+                        .overlay(
+                            Image(systemName: "chevron.left")
+                                .font(.system(size: 22, weight: .bold))
+                                .foregroundColor(Color(red: 33/255, green: 158/255, blue: 188/255))
+                        )
+                }
+                .buttonStyle(.plain)
+            }
+        }
         .sheet(isPresented: $showingFrequencySheet) {
             NavigationStack {
                 List {
@@ -360,21 +370,21 @@ struct HinzufügenView: View {
             }
             .presentationDetents([.medium, .large])
         }
-        .navigationDestination(isPresented: $showSummary) {
-            if let summary = lastSummary {
-                MedicationSummaryView(summary: summary)
-            }
-        }
+
         .navigationDestination(item: $savedMedication) { med in
             MedicationSummaryView(
-                summary: HinzufügenView.MedicationSummary(
+                summary: MedicationSummary(
                     name: med.name,
                     note: med.note,
                     startDate: med.startDate,
+                    endDate: endDate,
                     time: time,
                     frequency: frequency,
                     weekdays: selectedWeekdays
-                )
+                ),
+                onFinish: {
+                    dismiss()
+                }
             )
         }
         .safeAreaInset(edge: .bottom) {
@@ -468,9 +478,6 @@ struct HinzufügenView: View {
         startDateEdited = false
         timeEdited = false
         frequencyEdited = false
-
-        showSummary = false
-        lastSummary = nil
         savedMedication = nil
     }
 }
@@ -480,6 +487,7 @@ struct MedicationSummary: Identifiable {
     let name: String
     let note: String?
     let startDate: Date
+    let endDate: Date?
     let time: Date
     let frequency: String
     let weekdays: Set<Int>
@@ -522,10 +530,8 @@ struct WeekdaysLiquidGlassSelection: View {
 }
 
 struct MedicationSummaryView: View {
-    @Environment(\.dismiss) private var dismiss
-    @State private var goHome = false
-    
     let summary: HinzufügenView.MedicationSummary
+    let onFinish: () -> Void
     
     // Manuell definierte Wochentagsinitialen in deutscher Reihenfolge Montag=0 ... Sonntag=6
     private let weekdayInitials: [String] = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"]
@@ -546,8 +552,6 @@ struct MedicationSummaryView: View {
                 .ignoresSafeArea()
 
             VStack {
-                NavigationLink(destination: Startseite(), isActive: $goHome) { EmptyView() }
-
                 Spacer(minLength: 24)
 
                 // Karte
@@ -622,7 +626,7 @@ struct MedicationSummaryView: View {
                                 Text("Enddatum")
                                     .font(.subheadline)
                                     .foregroundColor(.secondary)
-                                Text("nie")
+                                Text(summary.endDate?.formatted(date: .long, time: .omitted) ?? "nie")
                                     .font(.body)
                             }
                             Spacer()
@@ -653,9 +657,8 @@ struct MedicationSummaryView: View {
 
                 Spacer(minLength: 24)
 
-                // Unterer orangener Button
                 Button(action: {
-                    goHome = true
+                    onFinish()
                 }) {
                     Text("Erinnerung hinzufügen")
                         .font(.headline.weight(.semibold))
