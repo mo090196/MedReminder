@@ -1,9 +1,18 @@
 import SwiftUI
 import UserNotifications
 
+final class LocalNotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
+    func userNotificationCenter(_ center: UNUserNotificationCenter,
+                                willPresent notification: UNNotification,
+                                withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        completionHandler([.banner, .list, .sound])
+    }
+}
+
 struct AppContainerView: View {
     @State private var notificationAuthRequested = false
     @State private var isLoggedIn = false
+    private let notificationDelegate = LocalNotificationDelegate()
 
     var body: some View {
         ZStack {
@@ -19,10 +28,10 @@ struct AppContainerView: View {
         .task {
             guard !notificationAuthRequested else { return }
             notificationAuthRequested = true
+            UNUserNotificationCenter.current().delegate = notificationDelegate
             do {
                 try await NotificationManager.shared.requestAuthorization()
             } catch {
-                // Optional: handle or log the error
                 print("Notification authorization error: \(error)")
             }
         }

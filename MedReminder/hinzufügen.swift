@@ -387,6 +387,51 @@ struct HinzufügenView: View {
                 guard !name.isEmpty, startDateEdited, timeEdited, !frequency.isEmpty else { return }
 
                 let med = saveMedication()
+                Task {
+                    do {
+                        // Berechtigung sicherstellen
+                        try await NotificationManager.shared.requestAuthorization()
+
+                        // Uhrzeit-Komponenten aus `time`
+                        let comps = Calendar.current.dateComponents([.hour, .minute], from: time)
+                        let hour = comps.hour ?? 8
+                        let minute = comps.minute ?? 0
+
+                        switch frequency {
+                        case "once":
+                            // Einmalige Mitteilung am Startdatum zur gewählten Uhrzeit
+                            if let fireDate = Calendar.current.date(bySettingHour: hour, minute: minute, second: 0, of: startDate) {
+                                _ = try await NotificationManager.shared.scheduleOneTimeMedicationReminder(
+                                    name: "Es ist Zeit, dein Medikament einzunehmen: \(name)",
+                                    date: fireDate,
+                                    notes: note.isEmpty ? nil : note
+                                )
+                            }
+                        case "daily":
+                            // Tägliche Mitteilung zur Uhrzeit (ab morgen/Heute je nach System)
+                            if let todayAtTime = Calendar.current.date(bySettingHour: hour, minute: minute, second: 0, of: Date()) {
+                                _ = try await NotificationManager.shared.scheduleMedicationReminder(
+                                    name: "Es ist Zeit, dein Medikament einzunehmen: \(name)",
+                                    time: todayAtTime,
+                                    repeatsDaily: true,
+                                    notes: note.isEmpty ? nil : note
+                                )
+                            }
+                        default:
+                            // Für andere Frequenzen (every2Days, weekdays) können wir später erweitern
+                            if let todayAtTime = Calendar.current.date(bySettingHour: hour, minute: minute, second: 0, of: Date()) {
+                                _ = try await NotificationManager.shared.scheduleMedicationReminder(
+                                    name: "Es ist Zeit, dein Medikament einzunehmen: \(name)",
+                                    time: todayAtTime,
+                                    repeatsDaily: true,
+                                    notes: note.isEmpty ? nil : note
+                                )
+                            }
+                        }
+                    } catch {
+                        print("Fehler beim Planen der Benachrichtigung: \(error)")
+                    }
+                }
                 savedMedication = med
             }) {
                 Text("Weiter")

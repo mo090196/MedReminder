@@ -37,6 +37,24 @@ final class NotificationManager {
         return id
     }
 
+    @discardableResult
+    func scheduleOneTimeMedicationReminder(id: String = UUID().uuidString,
+                                           name: String,
+                                           date: Date,
+                                           notes: String? = nil) async throws -> String {
+        let content = UNMutableNotificationContent()
+        content.title = "Medikament einnehmen"
+        content.body = notes?.isEmpty == false ? "\(name) – \(notes!)" : name
+        content.sound = .default
+
+        let comps = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute, .second], from: date)
+        let trigger = UNCalendarNotificationTrigger(dateMatching: comps, repeats: false)
+
+        let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
+        try await UNUserNotificationCenter.current().add(request)
+        return id
+    }
+
     // Remove a scheduled notification
     func removePendingNotification(with id: String) {
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [id])
