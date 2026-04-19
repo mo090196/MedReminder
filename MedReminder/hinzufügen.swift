@@ -3,6 +3,9 @@ import SwiftData
 import Foundation
 
 struct HinzufügenView: View {
+    
+    @EnvironmentObject private var userSession: UserSession
+    
     @Environment(\.modelContext) private var context
     @EnvironmentObject private var medicationStore: MedicationStore
     @Environment(\.dismiss) private var dismiss
@@ -308,16 +311,15 @@ struct HinzufügenView: View {
                 Button {
                     dismiss()
                 } label: {
-                    Circle()
-                        .fill(Color.white)
-                        .frame(width: 30, height: 60)
-                        .overlay(
-                            Image(systemName: "chevron.left")
-                                .font(.system(size: 22, weight: .bold))
-                                .foregroundColor(Color(red: 33/255, green: 158/255, blue: 188/255))
-                        )
+                    Image(systemName: "chevron.left")
+                        .font(.headline)
+                        .foregroundStyle(Color(red: 0x00/255, green: 0x97/255, blue: 0xB2/255))
+                        .frame(width: 28, height: 28)
+                        .background(
+                            Circle()
+                                .stroke(Color(red: 0x00/255, green: 0x97/255, blue: 0xB2/255), lineWidth: 2)
+                            )
                 }
-                .buttonStyle(.plain)
             }
         }
         .sheet(isPresented: $showingFrequencySheet) {
@@ -389,6 +391,7 @@ struct HinzufügenView: View {
         }
         .safeAreaInset(edge: .bottom) {
             Button(action: {
+                guard userSession.role.canAddMedication else { return }
                 nameEdited = true
                 startDateEdited = true
                 timeEdited = true
@@ -399,43 +402,42 @@ struct HinzufügenView: View {
                 let med = saveMedication()
                 Task {
                     do {
-                        // Berechtigung sicherstellen
-                        try await NotificationManager.shared.requestAuthorization()
+                        if userSession.role.canReceiveNotifications {
+                            try await NotificationManager.shared.requestAuthorization()
 
-                        // Uhrzeit-Komponenten aus `time`
-                        let comps = Calendar.current.dateComponents([.hour, .minute], from: time)
-                        let hour = comps.hour ?? 8
-                        let minute = comps.minute ?? 0
+                            let comps = Calendar.current.dateComponents([.hour, .minute], from: time)
+                            let hour = comps.hour ?? 8
+                            let minute = comps.minute ?? 0
 
-                        switch frequency {
-                        case "once":
-                            // Einmalige Mitteilung am Startdatum zur gewählten Uhrzeit
-                            if let fireDate = Calendar.current.date(bySettingHour: hour, minute: minute, second: 0, of: startDate) {
-                                _ = try await NotificationManager.shared.scheduleOneTimeMedicationReminder(
-                                    name: "Es ist Zeit, dein Medikament einzunehmen: \(name)",
-                                    date: fireDate,
-                                    notes: note.isEmpty ? nil : note
-                                )
-                            }
-                        case "daily":
-                            // Tägliche Mitteilung zur Uhrzeit (ab morgen/Heute je nach System)
-                            if let todayAtTime = Calendar.current.date(bySettingHour: hour, minute: minute, second: 0, of: Date()) {
-                                _ = try await NotificationManager.shared.scheduleMedicationReminder(
-                                    name: "Es ist Zeit, dein Medikament einzunehmen: \(name)",
-                                    time: todayAtTime,
-                                    repeatsDaily: true,
-                                    notes: note.isEmpty ? nil : note
-                                )
-                            }
-                        default:
-                            // Für andere Frequenzen (every2Days, weekdays) können wir später erweitern
-                            if let todayAtTime = Calendar.current.date(bySettingHour: hour, minute: minute, second: 0, of: Date()) {
-                                _ = try await NotificationManager.shared.scheduleMedicationReminder(
-                                    name: "Es ist Zeit, dein Medikament einzunehmen: \(name)",
-                                    time: todayAtTime,
-                                    repeatsDaily: true,
-                                    notes: note.isEmpty ? nil : note
-                                )
+                            switch frequency {
+                            case "once":
+                                if let fireDate = Calendar.current.date(bySettingHour: hour, minute: minute, second: 0, of: startDate) {
+                                    _ = try await NotificationManager.shared.scheduleOneTimeMedicationReminder(
+                                        name: "Es ist Zeit, dein Medikament einzunehmen: \(name)",
+                                        date: fireDate,
+                                        notes: note.isEmpty ? nil : note
+                                    )
+                                }
+
+                            case "daily":
+                                if let todayAtTime = Calendar.current.date(bySettingHour: hour, minute: minute, second: 0, of: Date()) {
+                                    _ = try await NotificationManager.shared.scheduleMedicationReminder(
+                                        name: "Es ist Zeit, dein Medikament einzunehmen: \(name)",
+                                        time: todayAtTime,
+                                        repeatsDaily: true,
+                                        notes: note.isEmpty ? nil : note
+                                    )
+                                }
+
+                            default:
+                                if let todayAtTime = Calendar.current.date(bySettingHour: hour, minute: minute, second: 0, of: Date()) {
+                                    _ = try await NotificationManager.shared.scheduleMedicationReminder(
+                                        name: "Es ist Zeit, dein Medikament einzunehmen: \(name)",
+                                        time: todayAtTime,
+                                        repeatsDaily: true,
+                                        notes: note.isEmpty ? nil : note
+                                    )
+                                }
                             }
                         }
                     } catch {

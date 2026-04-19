@@ -2,6 +2,8 @@ import SwiftUI
 
 struct Startseite: View {
     
+    @EnvironmentObject private var userSession: UserSession
+    
     private var todaysMedications: [MedicationStore.Medication] {
         medicationStore.medications.filter { $0.isScheduled(on: Date()) }
     }
@@ -45,22 +47,24 @@ struct Startseite: View {
 
                         Spacer()
 
-                        Button {
-                            showHinzufuegen = true
-                        } label: {
-                            ZStack {
-                                Image(systemName: "circle.fill")
-                                    .foregroundColor(.orange)
-                                    .font(.system(size: 55))
+                        if userSession.role.canAddMedication {
+                            Button {
+                                showHinzufuegen = true
+                            } label: {
+                                ZStack {
+                                    Image(systemName: "circle.fill")
+                                        .foregroundColor(.orange)
+                                        .font(.system(size: 55))
 
-                                Image(systemName: "circle")
-                                    .foregroundColor(.white)
-                                    .font(.system(size: 48))
+                                    Image(systemName: "circle")
+                                        .foregroundColor(.white)
+                                        .font(.system(size: 48))
 
-                                Image(systemName: "plus")
-                                    .foregroundColor(.white)
-                                    .font(.system(size: 25))
-                                    .fontWeight(.bold)
+                                    Image(systemName: "plus")
+                                        .foregroundColor(.white)
+                                        .font(.system(size: 25))
+                                        .fontWeight(.bold)
+                                }
                             }
                         }
                     }
@@ -140,9 +144,12 @@ struct Startseite: View {
                 UebersichtView()
             }
             .fullScreenCover(isPresented: $showHinzufuegen) {
-                NavigationStack {
-                    HinzufügenView()
-                        .environmentObject(medicationStore)
+                if userSession.role.canAddMedication {
+                    NavigationStack {
+                        HinzufügenView()
+                            .environmentObject(medicationStore)
+                            .environmentObject(userSession)
+                    }
                 }
             }
         }

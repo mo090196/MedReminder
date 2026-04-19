@@ -1,8 +1,7 @@
 import SwiftUI
 
 struct LoginScreen: View {
-    @Binding var isLoggedIn: Bool
-
+    @EnvironmentObject private var userSession: UserSession
     @State private var showCreateAccount = false
     @State private var showSignIn = false
     var body: some View {
@@ -88,17 +87,17 @@ struct LoginScreen: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             .navigationDestination(isPresented: $showCreateAccount) {
-                AccountRoleSelectionView(isLoggedIn: $isLoggedIn)
+                AccountRoleSelectionView()
             }
             .navigationDestination(isPresented: $showSignIn) {
-                SignInRoleSelectionView(isLoggedIn: $isLoggedIn)
-            }
+                SignInRoleSelectionView()
+                }
             }
         }
     }
 
 struct AccountRoleSelectionView: View {
-    @Binding var isLoggedIn: Bool
+    @EnvironmentObject private var userSession: UserSession
     @Environment(\.dismiss) private var dismiss
     @State private var navigateToCreate: Bool = false
     @State private var selectedRoleToCreate: CreateAccountView.RoleOption = .einnehmer
@@ -189,13 +188,13 @@ struct AccountRoleSelectionView: View {
                 .ignoresSafeArea()
         )
         .navigationDestination(isPresented: $navigateToCreate) {
-            CreateAccountView(selectedRole: selectedRoleToCreate, isLoggedIn: $isLoggedIn)
+            CreateAccountView(selectedRole: selectedRoleToCreate)
         }
     }
 }
 
 struct CreateAccountView: View {
-    @Binding var isLoggedIn: Bool
+    @EnvironmentObject private var userSession: UserSession
     @Environment(\.dismiss) private var dismiss
     @State private var email: String = ""
     @State private var password: String = ""
@@ -212,9 +211,8 @@ struct CreateAccountView: View {
         var id: String { rawValue }
     }
     
-    init(selectedRole: RoleOption = .einnehmer, isLoggedIn: Binding<Bool>) {
+    init(selectedRole: RoleOption = .einnehmer) {
         _selectedRole = State(initialValue: selectedRole)
-        _isLoggedIn = isLoggedIn
     }
     
     private var isEmailValid: Bool {
@@ -426,14 +424,28 @@ struct CreateAccountView: View {
                 .ignoresSafeArea()
         )
     }
+    
+    private func mappedUserRole() -> UserRole {
+        switch selectedRole {
+        case .einnehmer:
+            return .einnehmer
+        case .betreuer:
+            return .betreuer
+        case .betreuterEinnehmer:
+            return .betreuterEinnehmer
+        }
+    }
 
     private func createAccount() {
         guard isFormValid else { return }
         isCreating = true
+
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             isCreating = false
+            userSession.role = mappedUserRole()
+
             withAnimation(.easeInOut(duration: 0.45)) {
-                isLoggedIn = true
+                userSession.isLoggedIn = true
             }
         }
     }
@@ -441,7 +453,7 @@ struct CreateAccountView: View {
 
 
 struct SignInRoleSelectionView: View {
-    @Binding var isLoggedIn: Bool
+    @EnvironmentObject private var userSession: UserSession
     @Environment(\.dismiss) private var dismiss
     @State private var navigateToSignIn: Bool = false
     @State private var selectedRoleToSignIn: CreateAccountView.RoleOption = .einnehmer
@@ -552,13 +564,13 @@ struct SignInRoleSelectionView: View {
                 .ignoresSafeArea()
         )
         .navigationDestination(isPresented: $navigateToSignIn) {
-            SignInFormView(selectedRole: selectedRoleToSignIn, isLoggedIn: $isLoggedIn)
+            SignInFormView(selectedRole: selectedRoleToSignIn)
         }
     }
 }
 
 struct SignInFormView: View {
-    @Binding var isLoggedIn: Bool
+    @EnvironmentObject private var userSession: UserSession
     @Environment(\.dismiss) private var dismiss
     @State private var email: String = ""
     @State private var password: String = ""
@@ -566,9 +578,8 @@ struct SignInFormView: View {
     @State private var selectedRole: CreateAccountView.RoleOption
     @State private var showPassword: Bool = false
 
-    init(selectedRole: CreateAccountView.RoleOption = .einnehmer, isLoggedIn: Binding<Bool>) {
+    init(selectedRole: CreateAccountView.RoleOption = .einnehmer) {
         _selectedRole = State(initialValue: selectedRole)
-        _isLoggedIn = isLoggedIn
     }
 
     private var isEmailValid: Bool { email.contains("@") }
@@ -730,14 +741,28 @@ struct SignInFormView: View {
                 .ignoresSafeArea()
         )
     }
+    
+    private func mappedUserRole() -> UserRole {
+        switch selectedRole {
+        case .einnehmer:
+            return .einnehmer
+        case .betreuer:
+            return .betreuer
+        case .betreuterEinnehmer:
+            return .betreuterEinnehmer
+        }
+    }
 
     private func signIn() {
         guard isFormValid else { return }
         isSigningIn = true
+
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             isSigningIn = false
+            userSession.role = mappedUserRole()
+
             withAnimation(.easeInOut(duration: 0.45)) {
-                isLoggedIn = true
+                userSession.isLoggedIn = true
             }
         }
     }
@@ -820,12 +845,12 @@ struct CircleView: View {
 }
 
 struct RootView: View {
-    @Binding var isLoggedIn: Bool
+    @EnvironmentObject private var userSession: UserSession
     @State private var showIntro: Bool = true
 
     var body: some View {
         ZStack {
-            LoginScreen(isLoggedIn: $isLoggedIn)
+            LoginScreen()
                 .opacity(showIntro ? 0 : 1)
             if showIntro {
                 IntroView()
@@ -843,5 +868,6 @@ struct RootView: View {
 }
 
 #Preview {
-    RootView(isLoggedIn: .constant(false))
+    RootView()
+        .environmentObject(UserSession())
 }
