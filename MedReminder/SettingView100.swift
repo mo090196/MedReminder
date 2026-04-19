@@ -14,6 +14,8 @@ struct SettingsView100: View {
     // Für Demo: richtiges Passwort
     private let correctPassword = "12345678"
     
+    @Environment(\.dismiss) private var dismiss
+    
     var body: some View {
         NavigationStack {
             VStack(spacing: 20) {
@@ -21,8 +23,7 @@ struct SettingsView100: View {
                 // HEADER mit Zurück-Button
                 HStack {
                     Button {
-                        // später verknüpfen
-                        print("Zurück gedrückt")
+                        dismiss()
                     } label: {
                         Image(systemName: "chevron.left")
                             .font(.system(size: 18, weight: .semibold))

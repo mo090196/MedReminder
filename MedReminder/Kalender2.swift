@@ -1,45 +1,23 @@
-//  CalendarView.swift
-//  MedReminder
-//
-//  Created by Assistant on 18.01.26.
-//
-
 import SwiftUI
 
-struct CalendarView: View {
+struct CalendarView2: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var medicationStore: MedicationStore
     @State private var selectedDate: Date = .now
     @State private var showingDetail: IntakeDetailItem? = nil
-
-    // Navigation state for bottom bar and settings
+    
     @State private var navigateToCalendar: Bool = false
     @State private var navigateToUebersicht: Bool = false
     @State private var navigateToSettings: Bool = false
 
-    // MARK: Höhe des blauen Containers anpassen – diesen Wert ändern
-    private let containerVerticalOffset: CGFloat = -80 // <— Hier Zahl ändern, um Höhe zu verstellen
-
     var body: some View {
         NavigationStack {
             ZStack {
-                // Background color
-                Color(red: 0xE3/255.0, green: 0xFA/255.0, blue: 0xFF/255.0)
-                    .ignoresSafeArea()
+                Color(red: 0xE3/255.0, green: 0xFA/255.0, blue: 0xFF/255.0).ignoresSafeArea()
 
-                // Background overlay circle similar to Startseite
-                    .overlay(
-                Circle()
-                       .fill(Color(red: 33/255, green: 158/255, blue: 188/255))
-                       .frame(width: 1000, height: 1000)
-                       .offset(x: -300, y: -845),
-                alignment: .topLeading
-                )
-
-                VStack(spacing: 0) {
-                    Spacer(minLength: 0)
-
-                    // Blue rounded container
+                // Blue rounded container
+                VStack {
+                    // Container content
                     VStack(alignment: .leading, spacing: 12) {
                         // Top-left calendar icon
                         Image(systemName: "calendar")
@@ -69,7 +47,7 @@ struct CalendarView: View {
                             .tint(.black)
                             .foregroundStyle(.black.opacity(0.9))
 
-                        // Calendar grid (tap shows details)
+                        // Calendar grid
                         CalendarMonthGrid(monthFor: selectedDate, onTapDay: { date in
                             showingDetail = IntakeDetailItem(date: date)
                         })
@@ -80,7 +58,8 @@ struct CalendarView: View {
                         RoundedRectangle(cornerRadius: 16, style: .continuous)
                             .fill(Color(red: 0xA9/255.0, green: 0xE5/255.0, blue: 0xF3/255.0))
                     )
-                    // Bottom action row inside the blue container
+
+                    // Bottom action row inside the blue container visual context
                     .overlay(
                         HStack {
                             Button(role: .cancel) {
@@ -107,17 +86,14 @@ struct CalendarView: View {
                         .padding(.bottom, 14)
                         , alignment: .bottom
                     )
-                    .frame(maxWidth: .infinity)
-                    .offset(y: containerVerticalOffset)
 
                     Spacer(minLength: 0)
                 }
                 .padding(.horizontal)
             }
-            // Bottom navigator bar from Startseite with right item highlighted
             .overlay(
                 HStack {
-                    // Left: Übersicht (navigates to overview)
+                    // Left: Übersicht (dimmed)
                     Button(action: { navigateToUebersicht = true }) {
                         VStack(spacing: 4) {
                             Image(systemName:"list.bullet.rectangle")
@@ -130,7 +106,7 @@ struct CalendarView: View {
 
                     Spacer()
 
-                    // Center: Startseite (navigates to home)
+                    // Center: Startseite (dimmed)
                     Button(action: { navigateToCalendar = true }) {
                         VStack(spacing: 4) {
                             Image(systemName: "house.fill")
@@ -143,7 +119,7 @@ struct CalendarView: View {
 
                     Spacer()
 
-                    // Right: Kalender (highlighted)
+                    // Right: Kalender (highlighted at right position)
                     VStack {
                         Image(systemName: "calendar")
                             .font(.system(size: 60, weight: .bold))
@@ -169,7 +145,6 @@ struct CalendarView: View {
                     }
                 }
             }
-            // Detail sheet for tapped day
             .sheet(item: $showingDetail) { item in
                 IntakeDetailSheet(
                     date: item.date,
@@ -177,7 +152,6 @@ struct CalendarView: View {
                 )
                 .presentationDetents([.fraction(0.3), .medium])
             }
-            // Navigation destinations
             .navigationDestination(isPresented: $navigateToCalendar) {
                 Startseite()
                     .environmentObject(medicationStore)
@@ -393,3 +367,4 @@ private struct IntakeDetailSheet: View, Identifiable {
     CalendarView()
         .environmentObject(MedicationStore())
 }
+

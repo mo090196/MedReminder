@@ -91,40 +91,104 @@ final class MedicationStore: ObservableObject {
 
 struct UebersichtView: View {
     @EnvironmentObject private var store: MedicationStore
+    
+    @State private var navigateToStartseite: Bool = false
+    @State private var navigateToCalendar: Bool = false
+    @State private var navigateToSettings: Bool = false
 
     var body: some View {
-        Group {
-            VStack(spacing: 0) {
-                Header()
+        NavigationStack {
+            Group {
+                VStack(spacing: 0) {
+                    Header()
 
-                ScrollView {
-                    VStack(spacing: 16) {
-                        if store.medications.isEmpty {
-                            Text("Noch keine Medikamente eingetragen")
-                                .font(.system(size: 20, weight: .semibold))
-                                .foregroundColor(.gray)
-                                .padding(.top, 40)
-                        } else {
-                            ForEach(store.medications) { med in
-                                MedicationCard(
-                                    time: med.time,
-                                    name: med.name,
-                                    details: med.details,
-                                    isActive: med.isScheduled(on: Date())                                )
+                    ScrollView {
+                        VStack(spacing: 16) {
+                            if store.medications.isEmpty {
+                                Text("Noch keine Medikamente eingetragen")
+                                    .font(.system(size: 20, weight: .semibold))
+                                    .foregroundColor(.gray)
+                                    .padding(.top, 40)
+                            } else {
+                                ForEach(store.medications) { med in
+                                    MedicationCard(
+                                        time: med.time,
+                                        name: med.name,
+                                        details: med.details,
+                                        isActive: med.isScheduled(on: Date())                                )
+                                }
                             }
                         }
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 24)
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 24)
                 }
-
-                BottomTabBar()
+                .background(Color(hex: 0xE3FAFF))
+                .ignoresSafeArea(edges: .top)
             }
-            .background(Color(hex: 0xE3FAFF))
-            .ignoresSafeArea(edges: .top)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button { navigateToSettings = true } label: { Image(systemName: "gearshape") }
+                }
+            }
+            .overlay(
+                HStack {
+                    // Left: Übersicht highlighted
+                    VStack {
+                        Image(systemName:"list.bullet.rectangle")
+                            .font(.system(size: 60, weight: .bold))
+                        Text("Übersicht")
+                            .font(.system(size: 22, weight: .bold))
+                    }
+                    .foregroundColor(.white)
+
+                    Spacer()
+
+                    // Center: Startseite (dimmed)
+                    Button(action: { navigateToStartseite = true }) {
+                        VStack(spacing: 4) {
+                            Image(systemName: "house.fill")
+                                .font(.system(size: 55))
+                            Text("Startseite")
+                                .font(.system(size: 22, weight: .bold))
+                        }
+                    }
+                    .foregroundColor(.white.opacity(0.7))
+
+                    Spacer()
+
+                    // Right: Kalender (dimmed)
+                    Button(action: { navigateToCalendar = true }) {
+                        VStack(spacing: 4) {
+                            Image(systemName: "calendar")
+                                .font(.system(size: 55))
+                            Text("Kalender")
+                                .font(.system(size: 22, weight: .bold))
+                        }
+                    }
+                    .foregroundColor(.white.opacity(0.7))
+                }
+                .padding()
+                .background(Color(red: 35/255, green: 150/255, blue: 185/255))
+                .clipShape(UnevenRoundedRectangle(topLeadingRadius: 30, topTrailingRadius: 30))
+                .offset(y: 35)
+                .ignoresSafeArea(edges: .bottom)
+            , alignment: .bottom)
+            .navigationDestination(isPresented: $navigateToStartseite) {
+                Startseite()
+                    .environmentObject(store)
+            }
+            .navigationDestination(isPresented: $navigateToCalendar) {
+                CalendarView()
+                    .environmentObject(store)
+            }
+            .navigationDestination(isPresented: $navigateToSettings) {
+                SettingsView100()
+            }
         }
     }
 }
+
 private struct Header: View {
     var body: some View {
         ZStack {
@@ -221,47 +285,6 @@ private struct MedicationCard: View {
         .accessibilityLabel("Medikament: \(name), Zeit: \(time.formatted(date: .omitted, time: .shortened))")
     }
 }
-
-private struct BottomTabBar: View {
-    var body: some View {
-        HStack(spacing: 32) {
-            TabItem(title: "Übersicht", systemImage: "list.bullet.rectangle")
-            TabItem(title: "Einnahmen", systemImage: "pills")
-            TabItem(title: "Einstellungen", systemImage: "gearshape")
-        }
-        .padding(.horizontal, 24)
-        .padding(.vertical, 12)
-        .background(Color(hex: 0x219EBC))
-        .frame(maxWidth: .infinity, alignment: .bottom)
-        .ignoresSafeArea(edges: .bottom)
-        .clipShape(
-            UnevenRoundedRectangle(
-                topLeadingRadius: 24,
-                topTrailingRadius: 24,
-                style: .continuous
-            )
-        )
-        .shadow(color: .black.opacity(0.06), radius: 10, x: 0, y: -2)
-    }
-}
-
-private struct TabItem: View {
-    var title: String
-    var systemImage: String
-    
-    var body: some View {
-        VStack(spacing: 4) {
-            Image(systemName: systemImage)
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(Color(hex: 0x0B6B7A))
-            Text(title)
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(Color(hex: 0x0B6B7A))
-        }
-        .frame(maxWidth: .infinity)
-    }
-}
-
 
 private extension Color {
     init(hex: UInt, alpha: Double = 1.0) {
