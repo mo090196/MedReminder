@@ -10,25 +10,38 @@ final class LocalNotificationDelegate: NSObject, UNUserNotificationCenterDelegat
 }
 
 struct AppContainerView: View {
+    @EnvironmentObject private var userSession: UserSession
+
     @State private var notificationAuthRequested = false
-    @State private var isLoggedIn = false
     private let notificationDelegate = LocalNotificationDelegate()
 
     var body: some View {
         ZStack {
-            if isLoggedIn {
+            if userSession.isLoggedIn {
                 Startseite()
                     .transition(.move(edge: .trailing))
             } else {
-                RootView(isLoggedIn: $isLoggedIn)
+                RootView()
                     .transition(.move(edge: .leading))
             }
         }
-        .animation(.easeInOut(duration: 0.25), value: isLoggedIn)
+        .animation(.easeInOut(duration: 0.25), value: userSession.isLoggedIn)
         .task {
-            guard !notificationAuthRequested else { return }
-            notificationAuthRequested = true
             UNUserNotificationCenter.current().delegate = notificationDelegate
+        }
+        .onChange(of: userSession.isLoggedIn) { loggedIn in
+            guard loggedIn else { return }
+            requestNotificationsIfNeeded()
+        }
+    }
+
+    private func requestNotificationsIfNeeded() {
+        guard userSession.role.canReceiveNotifications else { return }
+        guard !notificationAuthRequested else { return }
+
+        notificationAuthRequested = true
+
+        Task {
             do {
                 try await NotificationManager.shared.requestAuthorization()
             } catch {
