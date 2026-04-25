@@ -2,19 +2,24 @@
 //  HilfeView100.swift
 //  MedReminder
 //
-//  Created by Simav  on 15.03.26.
+//  Created by Simav  on 09.04.26.
 //
-
 import SwiftUI
 
 struct HilfeView100: View {
     @Environment(\.dismiss) private var dismiss
+    @State private var navigateTo: Ziel?
+    
+    enum Ziel: Identifiable {
+        case medikamente, kalender, konto
+        var id: Int { hashValue }
+    }
     
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
                 
-                // HEADER mit eigenem Back-Button
+                // HEADER
                 HStack {
                     Button {
                         dismiss()
@@ -51,18 +56,19 @@ struct HilfeView100: View {
                 
                 Divider().padding(.vertical, 10)
                 
-                // Die drei Buttons
+                // ✅ Buttons direkt unter dem Divider
                 VStack(spacing: 16) {
+                    
                     actionButton(iconName: "pills.fill", text: "Medikamente hinzufügen") {
-                        // TODO: Aktion für Medikamente hinzufügen
+                        navigateTo = .medikamente
                     }
                     
                     actionButton(iconName: "calendar", text: "Kalender") {
-                        // TODO: Aktion für Kalender
+                        navigateTo = .kalender
                     }
                     
                     actionButton(iconName: "person.2.fill", text: "Konto & Rollen") {
-                        // TODO: Aktion für Konto & Rollen
+                        navigateTo = .konto
                     }
                 }
                 .padding(.horizontal, 20)
@@ -71,33 +77,58 @@ struct HilfeView100: View {
             }
         }
         .background(Color(UIColor.systemBackground).ignoresSafeArea())
-        .navigationBarBackButtonHidden(true) // Verhindert doppelten Back-Button
+        .navigationBarBackButtonHidden(true)
+        
+        // Navigation
+        .background(
+            NavigationLink(
+                destination: destinationView(),
+                isActive: Binding(
+                    get: { navigateTo != nil },
+                    set: { if !$0 { navigateTo = nil } }
+                )
+            ) {
+                EmptyView()
+            }
+        )
     }
     
-    // MARK: - Action Button
     @ViewBuilder
+    private func destinationView() -> some View {
+        switch navigateTo {
+        case .medikamente:
+            HilfeMedikamenteHinzufügen100()
+        case .kalender:
+            HilfeKalender100()
+        case .konto:
+            HilfeKontoRollen100()
+        case .none:
+            EmptyView()
+        }
+    }
+    
     private func actionButton(iconName: String, text: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 16) {
                 Image(systemName: iconName)
                     .font(.system(size: 22, weight: .medium))
-                    .foregroundColor(.black)  // Icons schwarz
+                    .foregroundColor(.black)
 
                 Text(text)
                     .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.black)  // Text schwarz
+                    .foregroundColor(.black)
                 
                 Spacer()
                 
                 Image(systemName: "chevron.forward")
                     .font(.system(size: 18, weight: .medium))
-                    .foregroundColor(.black)  // Chevron Pfeile schwarz
+                    .foregroundColor(.black)
             }
             .padding(.vertical, 16)
             .padding(.horizontal, 20)
             .background(
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(Color(.systemGray5))  // Heller Grauton für die Buttons
+                    .fill(Color(.systemGray5))
             )
         }
     }
@@ -106,3 +137,4 @@ struct HilfeView100: View {
 #Preview {
     HilfeView100()
 }
+

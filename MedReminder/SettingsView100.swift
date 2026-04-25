@@ -1,3 +1,9 @@
+//
+//  SettingsView100.swift
+//  MedReminder
+//
+//  Created by Simav  on 09.04.26.
+//
 import SwiftUI
 
 struct SettingsView100: View {
@@ -200,3 +206,4 @@ struct SettingsView100: View {
 #Preview {
     SettingsView100()
 }
+
